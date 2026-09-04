@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SnipPaste composer placement bench</title>
+<style>
+  body { font: 14px/1.6 ui-sans-serif, system-ui, sans-serif; background: #0f0f14; color: #ececf1;
+         margin: 0; padding: 40px 20px 120px; }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  h1 { font-size: 19px; margin: 0 0 6px; }
+  p.note { color: #9a9aab; font-size: 13px; margin: 0 0 34px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: #8a8a9c;
+       margin: 34px 0 10px; font-weight: 600; }
+
+  .editable { outline: none; }
+  .editable:empty::before { content: attr(data-ph); color: #6e6e80; }
+  button { cursor: pointer; border: none; font: inherit; }
+  .icon { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+          background: #2a2a38; color: #d4d4e0; font-size: 15px; }
+  .send { background: #7c6cff; color: #fff; }
+
+  /* ---- ChatGPT-ish: text on top, control row underneath ---- */
+  .cg-box { background: #1b1b22; border: 1px solid #34343f; border-radius: 26px;
+            padding: 14px 16px 10px; }
+  .cg-box .editable { min-height: 26px; font-size: 15px; }
+  .cg-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .cg-row .spacer { flex: 1; }
+
+  /* ---- Claude-ish: taller box, controls bottom-right ---- */
+  .cl-outer { background: #1a1a20; border: 1px solid #35353f; border-radius: 16px; padding: 12px 14px 10px;
+              box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+  .cl-outer .editable { min-height: 48px; font-size: 15px; padding: 2px 0; }
+  .cl-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .cl-row .spacer { flex: 1; }
+
+  /* ---- Gemini-ish: short pill, icons vertically centred at the right ---- */
+  .gm-pill { background: #1c1c24; border: 1px solid #333340; border-radius: 30px;
+             display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 22px; }
+  .gm-pill .editable { flex: 1; min-height: 28px; display: flex; align-items: center; font-size: 15px; }
+
+  /* ---- a plain search input, the small-field case ---- */
+  .search { width: 320px; padding: 9px 12px; border-radius: 9px; border: 1px solid #34343f;
+            background: #17171e; color: #ececf1; font: inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Composer placement bench</h1>
+  <p class="note">Replicas of the three composers the snip button has to sit inside without
+     colliding with the site's own controls.</p>
+
+  <h2>ChatGPT-style</h2>
+  <div class="cg-box" data-box="chatgpt">
+    <div class="editable" id="cg" contenteditable="true" data-ph="Ask anything"></div>
+    <div class="cg-row">
+      <button class="icon" data-ctl>+</button>
+      <button class="icon" data-ctl>⚒</button>
+      <span class="spacer"></span>
+      <button class="icon" data-ctl>🎤</button>
+      <button class="icon send" data-ctl>↑</button>
+    </div>
+  </div>
+
+  <h2>Claude-style</h2>
+  <div class="cl-outer" data-box="claude">
+    <div class="editable" id="cl" contenteditable="true" data-ph="How can I help you today?"></div>
+    <div class="cl-row">
+      <button class="icon" data-ctl>+</button>
+      <span class="spacer"></span>
+      <button class="icon" data-ctl>⌘</button>
+      <button class="icon send" data-ctl>↑</button>
+    </div>
+  </div>
+
+  <h2>Gemini-style</h2>
+  <div class="gm-pill" data-box="gemini">
+    <div class="editable" id="gm" contenteditable="true" data-ph="Ask Gemini"></div>
+    <button class="icon" data-ctl>🖼</button>
+    <button class="icon" data-ctl>🎤</button>
+    <button class="icon send" data-ctl>↑</button>
+  </div>
+
+  <h2>Plain search input</h2>
+  <input class="search" id="sr" type="search" placeholder="Search…" data-box="search">
+</div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SnipPaste test bench</title>
+  <style>
+    body { font: 14px/1.6 ui-sans-serif, system-ui, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 20px; color: #18181b; }
+    h1 { font-size: 20px; margin-bottom: 4px; }
+    p.sub { color: #71717a; margin-top: 0; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #71717a; margin: 26px 0 8px; }
+    textarea, .ce, input { width: 100%; box-sizing: border-box; font: inherit; border: 1px solid #d4d4d8; border-radius: 10px; padding: 12px 14px; }
+    textarea { height: 90px; resize: vertical; }
+    .ce { min-height: 90px; }
+    .ce img { max-width: 220px; border-radius: 8px; display: block; margin: 6px 0; }
+    #log { background: #18181b; color: #a7f3d0; border-radius: 10px; padding: 12px 14px; font: 12px/1.7 ui-monospace, Menlo, monospace; min-height: 60px; white-space: pre-wrap; }
+    .hint { color: #71717a; font-size: 12.5px; }
+  </style>
+</head>
+<body>
+  <h1>SnipPaste test bench</h1>
+  <p class="sub">Hover or focus a box below — the snip button appears in its corner. Drag a region; the crop should land here.</p>
+
+  <h2>Contenteditable (behaves like ChatGPT / Claude / Gemini)</h2>
+  <div class="ce" contenteditable="true" id="ce">Type here…</div>
+
+  <h2>Textarea (paste handler renders a preview)</h2>
+  <textarea id="ta" placeholder="Textareas can't hold images — this page's handler shows the file instead."></textarea>
+  <div id="taPreview"></div>
+
+  <h2>Single-line input (button sits outside the right edge)</h2>
+  <input type="text" placeholder="Search…">
+
+  <h2>Event log</h2>
+  <div id="log">waiting…</div>
+  <p class="hint">A working snip logs a <code>paste</code> event carrying one <code>image/png</code> file.</p>
+
+<script>
+  const log = document.getElementById('log');
+  let lines = [];
+  function say(msg) {
+    lines.push(new Date().toLocaleTimeString() + '  ' + msg);
+    log.textContent = lines.slice(-14).join('\n');
+  }
+
+  function describe(dt) {
+    if (!dt) return 'no dataTransfer';
+    const files = [...(dt.files || [])].map(f => f.name + ' ' + f.type + ' ' + f.size + 'B');
+    return files.length ? files.join(', ') : '(types: ' + [...dt.types].join(',') + ')';
+  }
+
+  function handleFiles(dt, target, preview) {
+    const file = [...(dt.files || [])].find(f => f.type.startsWith('image/'));
+    if (!file) return false;
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => say('rendered ' + img.naturalWidth + '×' + img.naturalHeight);
+    (preview || target).appendChild(img);
+    return true;
+  }
+
+  const ce = document.getElementById('ce');
+  const ta = document.getElementById('ta');
+  const taPreview = document.getElementById('taPreview');
+
+  for (const [el, preview] of [[ce, null], [ta, taPreview]]) {
+    el.addEventListener('paste', (e) => {
+      say('paste on ' + el.id + ' → ' + describe(e.clipboardData) + (e.isTrusted ? ' [trusted]' : ' [synthetic]'));
+      if (handleFiles(e.clipboardData, el, preview)) e.preventDefault();
+    });
+    el.addEventListener('drop', (e) => {
+      say('drop on ' + el.id + ' → ' + describe(e.dataTransfer));
+      if (handleFiles(e.dataTransfer, el, preview)) e.preventDefault();
+    });
+    el.addEventListener('dragover', (e) => e.preventDefault());
+  }
+</script>
+</body>
+</html>

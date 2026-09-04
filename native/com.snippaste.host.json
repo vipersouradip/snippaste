@@ -1,0 +1,9 @@
+﻿{
+    "name":  "com.snippaste.host",
+    "description":  "SnipPaste screen snipping helper",
+    "path":  "C:\\ALL PROJECTS\\snippaste\\native\\SnipPasteHost.exe",
+    "type":  "stdio",
+    "allowed_origins":  [
+                            "chrome-extension://nmcnffjofjobldocbnicfmbdanjlddlk/"
+                        ]
+}

@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SnipPaste</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      width: 300px; margin: 0; padding: 16px 16px 14px;
+      font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #fbfbfd; color: #18181b;
+    }
+    h1 { margin: 0 0 2px; font-size: 14px; letter-spacing: -.01em; }
+    .sub { margin: 0 0 14px; font-size: 11.5px; color: #71717a; }
+    .row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 10px 0; border-top: 1px solid #ececf1;
+    }
+    .row label { font-size: 12.5px; }
+    .row .note { display: block; font-size: 11px; color: #71717a; margin-top: 1px; }
+    input[type=checkbox] { width: 15px; height: 15px; accent-color: #6c5cff; }
+
+    .status { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 500; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #a1a1aa; flex: none; }
+    .dot.ok { background: #22c55e; }
+    .dot.bad { background: #f59e0b; }
+
+    .install { margin: 10px 0 0; padding: 10px 11px; border-radius: 8px;
+               background: #f4f4f7; border: 1px solid #e4e4e9; display: none; }
+    .install.show { display: block; }
+    .install p { margin: 0 0 7px; font-size: 11.5px; color: #52525b; }
+    .install code {
+      display: block; padding: 7px 8px; border-radius: 5px; background: #18181b; color: #e4e4e7;
+      font: 10.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: pre-wrap; word-break: break-all; user-select: all;
+    }
+    .copy { margin-top: 7px; font: inherit; font-size: 11.5px; padding: 4px 9px; border-radius: 6px;
+            border: 1px solid #d4d4d8; background: #fff; color: inherit; cursor: pointer; }
+    .copy:hover { border-color: #6c5cff; color: #6c5cff; }
+
+    .keys { margin-top: 12px; padding-top: 10px; border-top: 1px solid #ececf1; font-size: 11.5px; color: #71717a; }
+    .keys kbd {
+      font: 11px ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: #f1f1f5; border: 1px solid #dedee5; border-bottom-width: 2px;
+      border-radius: 4px; padding: 1px 4px; color: #3f3f46;
+    }
+    .keys p { margin: 0 0 5px; }
+    a { color: #6c5cff; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #161619; color: #ededf0; }
+      .sub, .row .note, .keys, .install p { color: #a1a1aa; }
+      .row, .keys { border-color: #2a2a30; }
+      .install { background: #1c1c21; border-color: #2f2f37; }
+      .install code { background: #0d0d11; }
+      .copy { background: #1f1f24; border-color: #3a3a42; }
+      .keys kbd { background: #26262c; border-color: #3a3a42; color: #d4d4d8; }
+    }
+  </style>
+</head>
+<body>
+  <h1>SnipPaste</h1>
+  <p class="sub">Snip anything on screen — it lands in your text box.</p>
+
+  <div class="row">
+    <div class="status">
+      <span class="dot" id="dot"></span>
+      <span id="statusText">Checking helper…</span>
+    </div>
+  </div>
+
+  <div class="install" id="install">
+    <p id="installWhy">The desktop helper opens the Windows snipping overlay. Without it, the
+      button snips only the current page. In the folder you unzipped SnipPaste into:</p>
+    <code id="cmd">powershell -ExecutionPolicy Bypass -File "install.ps1"</code>
+    <button class="copy" id="copy" type="button">Copy</button>
+  </div>
+
+  <div class="row">
+    <label for="showButton">Show button on text boxes
+      <span class="note">Turn off to use the shortcut only</span>
+    </label>
+    <input type="checkbox" id="showButton">
+  </div>
+
+  <div class="keys">
+    <p><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> snip anything on screen</p>
+    <p><kbd>Esc</kbd> cancels a snip · <a href="#" id="shortcuts">change shortcut</a></p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
