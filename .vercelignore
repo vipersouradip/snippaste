@@ -1,0 +1,14 @@
+# Only the homepage in site/ is deployed. Everything below is source, tooling
+# or signing material that must never reach a public host.
+/android
+/native
+/src
+/test
+/tools
+/icons
+/manifest.json
+/README.md
+*.pem
+*.keystore
+*.exe
+*.idsig

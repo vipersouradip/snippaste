@@ -28,8 +28,17 @@ signing key) and copies `android/SnipPaste.apk`, then regenerates `site/download
 
 To preview it — or to get the APK onto a tablet without a cable — run `node tools/serve.js`
 and open the `network` address it prints on the device; the download works straight from
-there. To publish it, upload the `site/` folder anywhere static (GitHub Pages, Netlify, any
-web host); the links are all relative.
+there.
+
+### Deploying
+
+`vercel.json` sets `outputDirectory` to `site`, so Vercel publishes only the homepage and
+serves it at `/`. Without that it looks for an output directory at the repo root, finds no
+`index.html`, and the deploy fails. `.vercelignore` keeps everything else — source, tooling
+and signing material — off the host entirely.
+
+For any other static host (GitHub Pages, Netlify, S3), publish the `site/` folder as the site
+root; every link in the page is relative.
 
 ---
 
@@ -146,6 +155,7 @@ Nothing leaves your machine. There is no network code in the extension or the he
 
 ```
 android/                    the Android app (see android/README.md)
+vercel.json                 publishes site/ as the deployed root
 site/                       the download homepage (index.html + downloads/)
 tools/build-site.ps1        packages both downloads and refreshes the page details
 manifest.json               MV3 manifest (pinned "key" fixes the extension ID)

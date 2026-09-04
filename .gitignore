@@ -1,0 +1,9 @@
+# Signing material — never commit. Both of these are private keys.
+tools/extension-key.pem
+android/debug.keystore
+
+# Build output
+android/build/
+android/SnipPaste.apk.idsig
+native/SnipPasteHost.exe
+node_modules/
