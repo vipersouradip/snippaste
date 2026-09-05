@@ -23,17 +23,24 @@ function inRoundedRect(x, y, x0, y0, x1, y1, r) {
 
 const rect = (x, y, x0, y0, x1, y1) => x >= x0 && x <= x1 && y >= y0 && y <= y1;
 
-/* Crop-mark brackets plus a solid centre block — still legible at 16px. */
+/* Crop-mark brackets around a solid chip — the selection, and what comes out of
+   it. Matches the mark drawn in site/index.html and the extension's own button.
+
+   Proportions are tuned for the 16px icon, where the brackets are only ~1.6px
+   wide: any thinner and they grey out into the tile once antialiased. */
 function inGlyph(x, y) {
-  const t = 0.085;          // stroke thickness
-  const i = 0.17;           // inset from the edge
-  const a = 0.22;           // arm length
+  const t = 0.092;          // stroke thickness
+  const i = 0.15;           // inset from the edge
+  const a = 0.27;           // arm length, corner included
+  const r = t / 2;          // round caps, to match the SVG mark's stroke-linecap
   const j = i + a;
-  if (rect(x, y, i, i, j, i + t) || rect(x, y, i, i, i + t, j)) return true;             // top-left
-  if (rect(x, y, 1 - j, i, 1 - i, i + t) || rect(x, y, 1 - i - t, i, 1 - i, j)) return true; // top-right
-  if (rect(x, y, i, 1 - i - t, j, 1 - i) || rect(x, y, i, 1 - j, i + t, 1 - i)) return true; // bottom-left
-  if (rect(x, y, 1 - j, 1 - i - t, 1 - i, 1 - i) || rect(x, y, 1 - i - t, 1 - j, 1 - i, 1 - i)) return true;
-  return inRoundedRect(x, y, 0.375, 0.375, 0.625, 0.625, 0.06);   // centre block
+  const k = 1 - i - a;      // mirrored arm start
+  const arm = (x0, y0, x1, y1) => inRoundedRect(x, y, x0, y0, x1, y1, r);
+  if (arm(i, i, j, i + t) || arm(i, i, i + t, j)) return true;                       // top-left
+  if (arm(k, i, 1 - i, i + t) || arm(1 - i - t, i, 1 - i, j)) return true;           // top-right
+  if (arm(i, 1 - i - t, j, 1 - i) || arm(i, k, i + t, 1 - i)) return true;           // bottom-left
+  if (arm(k, 1 - i - t, 1 - i, 1 - i) || arm(1 - i - t, k, 1 - i, 1 - i)) return true;
+  return inRoundedRect(x, y, 0.385, 0.385, 0.615, 0.615, 0.062);   // the chip
 }
 
 function renderRGBA(size) {
@@ -54,11 +61,12 @@ function renderRGBA(size) {
       const total = SS * SS;
       const alpha = bgHits / total;
       const fg = fgHits / total;
-      // Diagonal gradient: indigo -> violet.
-      const g = clamp01((px / size + py / size) / 2);
-      const bgR = 92 + (139 - 92) * g;
-      const bgG = 84 + (92 - 84) * g;
-      const bgB = 255 + (246 - 255) * g;
+      // A quiet vertical gradient, #6366F1 -> #4338CA. The old diagonal
+      // indigo-to-violet fought with the glyph at small sizes.
+      const g = clamp01(py / size);
+      const bgR = 99 + (67 - 99) * g;
+      const bgG = 102 + (56 - 102) * g;
+      const bgB = 241 + (202 - 241) * g;
       const mix = alpha > 0 ? fg / alpha : 0;
       const o = (py * size + px) * 4;
       buf[o] = Math.round(bgR + (255 - bgR) * mix);

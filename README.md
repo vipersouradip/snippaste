@@ -87,10 +87,15 @@ Hover or focus any text box — a small button appears in its corner.
 | Action | Result |
 | --- | --- |
 | Click the button | The Windows snip overlay opens; drag a region |
-| `Alt+Shift+S` | Same thing, into the focused text box |
-| `Esc` during a snip | Cancel |
+| **Hover** the button | A menu of prompts: Explain, Answer, Summarise, Translate, Extract the text |
+| `Alt+Shift+S` | Snip without a prompt, into the focused text box |
+| `Esc` | Cancel the snip, or close the menu |
 
 Release the mouse and the image is in your text box. That's the whole flow.
+
+Picking a prompt from the hover menu snips exactly the same way, then types that
+prompt into the composer next to the image — so a screenshot of a question becomes
+"*[image]* Answer this." in one gesture, ready to send.
 
 ## How it works
 
@@ -120,6 +125,13 @@ one, escalating until something sticks:
 4. **Clipboard** — a toast tells you to press Ctrl+V. (The OS snip already put it there.)
 
 Steps 1–3 need no user action, so pasting is automatic anywhere the site accepts images.
+
+**Typing the prompt.** A prompt from the hover menu goes in through
+`document.execCommand('insertText')`, which runs the browser's own editing pipeline, so
+React, ProseMirror and Lexical all see the `beforeinput`/`input` they expect. Assigning
+`.value` or `.textContent` is exactly what those composers ignore, so it is only the last
+fallback. The text goes in after the image, once the site has turned the file into an
+attachment.
 
 **Pinned extension ID.** `manifest.json` carries a `key`, so the unpacked extension always
 gets ID `nmcnffjofjobldocbnicfmbdanjlddlk`. Without it the ID would depend on the folder path
@@ -191,12 +203,16 @@ loads the real extension and pings the helper *through Chrome*, proving the regi
 manifest → exe bridge. Phase B loads a copy with `key` stripped, so its ID is not allowlisted
 and the helper refuses it; that exercises the in-page fallback with a full round trip —
 trigger, drag a 260×140 rectangle with synthesised mouse input, and assert the page received
-a `paste` carrying a `snip-*.png` of exactly those dimensions. **13/13.**
+a `paste` carrying a `snip-*.png` of exactly those dimensions. It then runs the round trip
+again with a prompt, and asserts the composer holds both the image and the prompt text.
+**15/15.**
 
 `node tools/placement-test.js` — loads replicas of the ChatGPT, Claude and Gemini composers
 (`test/composers.html`) and asserts the snip button lands inside each visible composer box and
-clear of that site's own buttons. This is what catches placement regressions, which the smoke
-test cannot see. **8/8.**
+clear of that site's own buttons. It then opens the hover menu with real CDP mouse input — a
+synthetic `pointerover` fires no `pointerenter` and no `:hover`, so nothing less would do —
+and checks it appears, stays on screen, and closes again. This is what catches placement
+regressions, which the smoke test cannot see. **11/11.**
 
 Chrome 137+ ignores `--load-extension` on the stable channel, so point `CHROME_PATH` at a
 Chrome for Testing binary:

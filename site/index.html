@@ -4,338 +4,378 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SnipPaste — snip anything, paste it automatically</title>
-<meta name="description" content="Snip any part of your screen and it lands in the text box you are typing in. Chrome extension for Windows, and an Android app.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%237C6CFF'/><g fill='none' stroke='white' stroke-width='2' stroke-linecap='round'><path d='M6 9V7h2M16 7h2v2M18 15v2h-2M8 17H6v-2'/><rect x='10' y='10' width='4' height='4' rx='1'/></g></svg>">
+<meta name="description" content="Snip any part of your screen and it lands in the text box you are typing in. Chrome extension for Windows. Android and iOS apps coming soon.">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='5.5' fill='%234F46E5'/><g fill='none' stroke='white' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'><path d='M5.6 9V7.1A1.5 1.5 0 0 1 7.1 5.6H9'/><path d='M15 5.6h1.9A1.5 1.5 0 0 1 18.4 7.1V9'/><path d='M18.4 15v1.9a1.5 1.5 0 0 1-1.5 1.5H15'/><path d='M9 18.4H7.1a1.5 1.5 0 0 1-1.5-1.5V15'/></g><rect x='8.2' y='8.2' width='7.6' height='7.6' rx='1.9' fill='white'/></svg>">
 <style>
   :root {
-    --bg: #0a0a0f;
-    --surface: #14141c;
-    --surface-2: #1b1b26;
-    --line: #2a2a38;
-    --text: #eceCf1;
-    --muted: #9a9aab;
-    --accent: #7c6cff;
-    --accent-soft: #a596ff;
-    --green: #34d399;
-    --amber: #fbbf24;
-    --radius: 14px;
-    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --bg:        #ffffff;
+    --surface:   #faf9f7;
+    --surface-2: #f4f2ee;
+    --line:      #e9e6e0;
+    --line-soft: #f0ede8;
+    --text:      #16161a;
+    --text-2:    #3f3f46;
+    --muted:     #71717a;
+    --faint:     #a1a1aa;
+    --accent:    #4f46e5;
+    --accent-d:  #4338ca;
+    --tint:      #f0efff;
+    --radius:    16px;
+    --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
 
   * { box-sizing: border-box; }
-
   html { scroll-behavior: smooth; }
 
   body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font: 16px/1.65 var(--font);
+    font: 16px/1.6 var(--font);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
     overflow-x: hidden;
   }
 
-  /* Ambient glow behind the hero. */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: -30% 0 auto 0;
-    height: 70vh;
-    background: radial-gradient(60% 60% at 50% 40%, rgba(124,108,255,.16), transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
+  .wrap { width: min(1060px, 100% - 44px); margin-inline: auto; }
 
-  .wrap { width: min(1080px, 100% - 40px); margin-inline: auto; position: relative; z-index: 1; }
+  a { color: var(--accent); text-underline-offset: 3px; }
 
-  a { color: var(--accent-soft); }
+  h1, h2, h3 { font-weight: 600; letter-spacing: -.022em; }
 
   /* ---------- header ---------- */
   header {
     position: sticky; top: 0; z-index: 20;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    background: rgba(10,10,15,.72);
+    background: rgba(255,255,255,.78);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    backdrop-filter: saturate(180%) blur(14px);
     border-bottom: 1px solid transparent;
-    transition: border-color .2s;
+    transition: border-color .25s;
   }
   header.stuck { border-bottom-color: var(--line); }
-  .bar { display: flex; align-items: center; gap: 14px; height: 62px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: -.01em; }
-  .mark {
-    width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
-    background: linear-gradient(140deg, #7c6cff, #9d7bff);
-    box-shadow: 0 4px 14px rgba(124,108,255,.4);
+  .bar { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+  .brand {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-weight: 600; font-size: 15.5px; letter-spacing: -.015em; color: var(--text);
+    text-decoration: none;
   }
-  nav { margin-left: auto; display: flex; gap: 22px; align-items: center; }
-  nav a { color: var(--muted); text-decoration: none; font-size: 14px; }
+  .brand svg { display: block; color: var(--accent); }
+  nav { display: flex; gap: 26px; align-items: center; }
+  nav a {
+    color: var(--muted); text-decoration: none; font-size: 14.5px;
+    transition: color .15s;
+  }
   nav a:hover { color: var(--text); }
-  @media (max-width: 700px) { nav .hide-sm { display: none; } }
 
   /* ---------- hero ---------- */
-  .hero { padding: 76px 0 8px; text-align: center; }
+  .hero { padding: 86px 0 20px; text-align: center; }
   h1 {
-    margin: 0 0 16px;
-    font-size: clamp(38px, 6.4vw, 62px);
-    line-height: 1.05;
-    letter-spacing: -.035em;
-    font-weight: 700;
+    font-size: clamp(38px, 6.4vw, 62px); line-height: 1.06;
+    letter-spacing: -.035em; margin: 0 0 22px;
   }
-  h1 .grad {
-    background: linear-gradient(100deg, #a596ff, #7c6cff 55%, #6ee7d0);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
+  h1 .accent { color: var(--accent); }
   .lede {
-    margin: 0 auto; max-width: 620px; font-size: clamp(16px, 2vw, 19px); color: var(--muted);
+    font-size: clamp(16.5px, 1.9vw, 19px); color: var(--muted);
+    max-width: 610px; margin: 0 auto; line-height: 1.62;
   }
-  .lede strong { color: var(--text); font-weight: 600; }
+  .lede strong { color: var(--text-2); font-weight: 550; }
 
-  /* ---------- demo ---------- */
-  .demo { margin: 44px auto 0; max-width: 780px; }
+  .cta { display: flex; gap: 12px; justify-content: center; margin-top: 34px; flex-wrap: wrap; }
+
+  .demo {
+    margin: 62px auto 0; max-width: 900px;
+    border: 1px solid var(--line); border-radius: 20px;
+    background: var(--surface); padding: 26px;
+  }
   .demo svg { width: 100%; height: auto; display: block; }
-  .ants { stroke-dasharray: 6 4; animation: march 1s linear infinite; }
+  .ants { stroke-dasharray: 6 4; animation: march 1.1s linear infinite; }
   @keyframes march { to { stroke-dashoffset: -20; } }
-  .pulse { animation: pulse 2.6s ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
-  @media (prefers-reduced-motion: reduce) {
-    .ants, .pulse { animation: none; }
-  }
+  .pulse { animation: pulse 2.8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: .4 } 50% { opacity: 1 } }
+  @media (prefers-reduced-motion: reduce) { .ants, .pulse { animation: none; } }
 
-  /* ---------- downloads ---------- */
-  .downloads {
-    display: grid; gap: 18px; margin: 56px 0 0;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  }
-  .card {
-    position: relative;
-    background: linear-gradient(180deg, var(--surface), #101018);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 26px 24px 24px;
-    display: flex; flex-direction: column;
-    transition: border-color .2s, transform .2s;
-  }
-  .card:hover { border-color: #3a3a4d; transform: translateY(-2px); }
-  .card.recommended { border-color: rgba(124,108,255,.55); box-shadow: 0 0 0 1px rgba(124,108,255,.2), 0 18px 50px -24px rgba(124,108,255,.7); }
-  .tag {
-    position: absolute; top: -10px; left: 24px;
-    background: var(--accent); color: #fff; font-size: 11px; font-weight: 650;
-    letter-spacing: .04em; text-transform: uppercase;
-    padding: 3px 9px; border-radius: 999px;
-    display: none;
-  }
-  .card.recommended .tag { display: block; }
-  .card h3 { margin: 0 0 2px; font-size: 19px; letter-spacing: -.01em; }
-  .card .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 18px; }
-  .plat { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
-  .plat svg { flex: none; color: var(--accent-soft); }
-
+  /* ---------- buttons ---------- */
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 9px;
-    padding: 13px 20px; border-radius: 10px; font-size: 15px; font-weight: 600;
+    padding: 12px 20px; border-radius: 11px;
+    font-size: 15px; font-weight: 550; letter-spacing: -.008em;
     text-decoration: none; border: 1px solid transparent; cursor: pointer;
-    background: linear-gradient(180deg, #8878ff, #6b5aff);
-    color: #fff; box-shadow: 0 6px 20px -8px rgba(124,108,255,.9);
-    transition: filter .15s, transform .1s;
-    width: 100%;
+    background: var(--accent); color: #fff;
+    transition: background .16s, border-color .16s, color .16s;
   }
-  .btn:hover { filter: brightness(1.08); }
-  .btn:active { transform: translateY(1px); }
-  .btn.ghost { background: var(--surface-2); border-color: var(--line); color: var(--text); box-shadow: none; }
-  .btn.ghost:hover { border-color: #43435a; }
-
-  .meta {
-    margin-top: 12px; font: 12px/1.6 var(--mono); color: var(--muted);
-    display: flex; flex-wrap: wrap; gap: 4px 12px;
+  .btn:hover { background: var(--accent-d); }
+  .btn.ghost {
+    background: transparent; color: var(--text-2); border-color: var(--line);
   }
-  .steps { margin: 18px 0 0; padding: 0; list-style: none; counter-reset: s; }
-  .steps li {
-    counter-increment: s; position: relative; padding-left: 30px;
-    font-size: 14px; color: #c9c9d6; margin-bottom: 9px;
-  }
-  .steps li::before {
-    content: counter(s); position: absolute; left: 0; top: 1px;
-    width: 20px; height: 20px; border-radius: 6px;
-    background: var(--surface-2); border: 1px solid var(--line);
-    color: var(--accent-soft); font: 600 11px/20px var(--font); text-align: center;
-  }
-  .steps code, .inline-code {
-    font: 12.5px var(--mono); background: #0d0d14; border: 1px solid var(--line);
-    padding: 1px 5px; border-radius: 5px; color: #d9d9e6;
+  .btn.ghost:hover { background: var(--surface); border-color: #ddd9d2; color: var(--text); }
+  .btn.block { width: 100%; }
+  .btn.disabled {
+    background: transparent; color: var(--faint);
+    border: 1px dashed #dbd7d0; cursor: default;
   }
 
   /* ---------- sections ---------- */
-  section { padding: 78px 0 0; }
-  h2 {
-    font-size: clamp(24px, 3.4vw, 32px); letter-spacing: -.025em; margin: 0 0 10px;
+  section { padding: 96px 0 0; }
+  .eyebrow {
+    font-size: 12px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 12px;
   }
-  .section-lede { color: var(--muted); max-width: 640px; margin: 0 0 30px; }
+  h2 { font-size: clamp(25px, 3.2vw, 33px); margin: 0 0 12px; letter-spacing: -.028em; }
+  .section-lede { color: var(--muted); max-width: 600px; margin: 0 0 40px; font-size: 16.5px; }
 
-  .flow { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-  .flow .step {
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 20px;
+  /* ---------- downloads ---------- */
+  .downloads {
+    display: grid; gap: 20px; margin-top: 40px;
+    grid-template-columns: repeat(auto-fit, minmax(296px, 1fr));
   }
-  .flow .n {
-    display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px;
-    background: rgba(124,108,255,.14); color: var(--accent-soft);
-    font-weight: 700; font-size: 13px; margin-bottom: 11px;
+  .card {
+    position: relative;
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 28px 26px 26px;
+    display: flex; flex-direction: column;
+    transition: border-color .2s;
   }
-  .flow h4 { margin: 0 0 5px; font-size: 15.5px; }
-  .flow p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.6; }
+  .card:hover { border-color: #ddd9d2; }
+  .card.recommended { border-color: #cdc8f5; background: linear-gradient(180deg, #fbfaff, #fff 42%); }
+  .card.soon { background: var(--surface); border-style: dashed; }
+  .card.soon:hover { border-color: var(--line); }
 
-  .use { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); }
-  .use .panel {
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 24px;
+  .tag {
+    position: absolute; top: 26px; right: 24px;
+    font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--muted); background: var(--surface-2);
+    padding: 4px 9px; border-radius: 999px;
+    display: none;
   }
-  .use .head { display: flex; align-items: center; gap: 11px; margin-bottom: 4px; }
-  .use .head svg { color: var(--accent-soft); flex: none; }
-  .use h3 { margin: 0; font-size: 18px; letter-spacing: -.01em; }
-  .use .where {
-    margin: 0 0 16px; font-size: 12.5px; color: var(--muted);
-    padding-left: 37px;
+  .card.recommended .tag { display: block; color: var(--accent); background: var(--tint); }
+  .card.soon .tag { display: block; }
+
+  /* The gap below the header belongs to the row, not to .sub: a bottom margin
+     inside the flex item makes align-items:center drop the icon by half of it. */
+  .plat { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+  .plat svg { flex: none; color: var(--text-2); }
+  .card.soon .plat svg, .card.soon h3 { color: var(--muted); }
+  .card h3 { margin: 0 0 1px; font-size: 18.5px; }
+  .card .sub { color: var(--muted); font-size: 13.5px; margin: 0; }
+
+  .meta {
+    margin-top: 14px; font: 12px/1.6 var(--mono); color: var(--muted);
+    display: flex; flex-wrap: wrap; gap: 3px 14px;
   }
-  .use ol { margin: 0; padding: 0; list-style: none; counter-reset: u; }
-  .use ol li {
-    counter-increment: u; position: relative; padding-left: 32px; margin-bottom: 12px;
-    font-size: 14.2px; color: #ccccd9; line-height: 1.55;
+  .more { margin: 16px 0 0; font-size: 13.5px; }
+  .soon-note { margin: 20px 0 0; font-size: 14px; line-height: 1.62; color: var(--muted); }
+  .soon-note b { color: var(--text-2); font-weight: 550; }
+
+  .steps { margin: 22px 0 0; padding: 0; list-style: none; counter-reset: s; }
+  .steps li {
+    counter-increment: s; position: relative; padding-left: 30px;
+    font-size: 14.2px; color: var(--text-2); margin-bottom: 11px; line-height: 1.55;
   }
-  .use ol li:last-child { margin-bottom: 0; }
-  .use ol li::before {
-    content: counter(u); position: absolute; left: 0; top: 0;
-    width: 22px; height: 22px; border-radius: 7px;
-    background: rgba(124,108,255,.15); color: var(--accent-soft);
-    font: 700 11.5px/22px var(--font); text-align: center;
+  .steps li:last-child { margin-bottom: 0; }
+  .steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 2px;
+    width: 20px; height: 20px; border-radius: 999px;
+    background: var(--surface-2); color: var(--muted);
+    font: 600 11px/20px var(--font); text-align: center;
   }
+  code, .inline-code {
+    font: 12.5px var(--mono); background: var(--surface-2);
+    padding: 2px 6px; border-radius: 5px; color: var(--text-2);
+  }
+
+  /* ---------- how to use ---------- */
+  .use { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .panel { border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 26px; }
+  .panel.soon { background: var(--surface); border-style: dashed; }
+  .head { display: flex; align-items: center; gap: 11px; margin-bottom: 3px; }
+  .head svg { color: var(--text-2); flex: none; }
+  .panel h3 { margin: 0; font-size: 17.5px; }
+  .panel.soon .head svg, .panel.soon h3 { color: var(--muted); }
+  .pill {
+    font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--muted); background: var(--surface-2);
+    padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+  }
+  .where { margin: 0 0 20px; font-size: 13px; color: var(--muted); padding-left: 35px; }
+  .panel ol { margin: 0; padding: 0; list-style: none; counter-reset: u; }
+  .panel ol li {
+    counter-increment: u; position: relative; padding-left: 32px; margin-bottom: 14px;
+    font-size: 14.4px; color: var(--text-2); line-height: 1.58;
+  }
+  .panel ol li:last-child { margin-bottom: 0; }
+  .panel ol li::before {
+    content: counter(u); position: absolute; left: 0; top: 1px;
+    width: 21px; height: 21px; border-radius: 999px;
+    background: var(--tint); color: var(--accent);
+    font: 600 11px/21px var(--font); text-align: center;
+  }
+  .panel.soon ol li::before { background: var(--surface-2); color: var(--muted); }
+  .panel b { font-weight: 550; color: var(--text); }
   .works {
-    margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--line);
-    font-size: 13px; color: var(--muted);
+    margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--line-soft);
+    font-size: 13.3px; color: var(--muted); line-height: 1.62;
   }
-  .works b { color: var(--text); }
 
-  .notes { display: grid; gap: 12px; }
+  /* ---------- notes ---------- */
+  .notes { border-top: 1px solid var(--line-soft); }
   .note {
-    display: flex; gap: 13px; align-items: flex-start;
-    background: var(--surface); border: 1px solid var(--line);
-    border-left: 3px solid var(--amber);
-    border-radius: 10px; padding: 15px 17px; font-size: 14px; color: #c9c9d6;
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 20px 2px; border-bottom: 1px solid var(--line-soft);
+    font-size: 14.4px; color: var(--muted); line-height: 1.62;
   }
-  .note.info { border-left-color: var(--accent); }
-  .note b { color: var(--text); }
+  .note b { color: var(--text); font-weight: 550; }
+  .note .dot {
+    flex: none; width: 7px; height: 7px; border-radius: 999px;
+    background: var(--accent); margin-top: 8px;
+  }
+  .note.warn .dot { background: #d9a441; }
 
+  /* ---------- footer ---------- */
   footer {
-    margin-top: 84px; padding: 28px 0 44px;
-    border-top: 1px solid var(--line); color: var(--muted); font-size: 13px;
+    margin-top: 96px; padding: 30px 0 52px;
+    border-top: 1px solid var(--line); color: var(--muted); font-size: 13.5px;
   }
-  .hashes { font: 11.5px/1.9 var(--mono); word-break: break-all; margin-top: 12px; color: #6e6e80; }
-  .hashes span { color: #8a8a9c; }
+  .foot-row { display: flex; justify-content: space-between; gap: 20px 26px; flex-wrap: wrap; align-items: center; }
+  .foot-links { display: flex; align-items: center; gap: 20px; }
+  .coffee {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid #ecdcb4; background: #fdf8ec; color: #8a6516;
+    font-size: 13.5px; font-weight: 550; text-decoration: none;
+    transition: background .16s, border-color .16s;
+  }
+  .coffee:hover { background: #fbf1dc; border-color: #e3cd9b; }
+  .coffee svg { flex: none; }
+  .hashes { font: 11.5px/1.9 var(--mono); word-break: break-all; margin-top: 16px; color: #8e8e99; }
+  .hashes span { color: var(--muted); }
+
+  @media (max-width: 560px) {
+    .hide-sm { display: none; }
+    .hero { padding-top: 58px; }
+    .demo { padding: 16px; border-radius: 16px; }
+    section { padding-top: 72px; }
+  }
 </style>
 </head>
 <body>
 
 <header id="top">
   <div class="wrap bar">
-    <div class="brand">
-      <span class="mark">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8"/><path d="M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8"/>
-          <path d="M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16"/><path d="M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/>
-          <rect x="9" y="9" width="6" height="6" rx="1"/>
-        </svg>
-      </span>
+    <a class="brand" href="#top">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <g stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5.6 9V7.1A1.5 1.5 0 0 1 7.1 5.6H9"/>
+          <path d="M15 5.6h1.9A1.5 1.5 0 0 1 18.4 7.1V9"/>
+          <path d="M18.4 15v1.9a1.5 1.5 0 0 1-1.5 1.5H15"/>
+          <path d="M9 18.4H7.1a1.5 1.5 0 0 1-1.5-1.5V15"/>
+        </g>
+        <rect x="8.2" y="8.2" width="7.6" height="7.6" rx="1.9" fill="currentColor"/>
+      </svg>
       SnipPaste
-    </div>
+    </a>
     <nav>
-      <a href="#download">Download</a>
-      <a href="#how" class="hide-sm">How to use</a>
+      <a href="#how" class="hide-sm">How it works</a>
       <a href="#install" class="hide-sm">Install</a>
+      <a href="#notes" class="hide-sm">Notes</a>
+      <a href="#download">Download</a>
     </nav>
   </div>
 </header>
 
 <main>
   <div class="wrap hero">
-    <h1>Snip anything.<br><span class="grad">It pastes itself.</span></h1>
+    <h1>Snip anything.<br><span class="accent">It pastes itself.</span></h1>
     <p class="lede">
       Drag a box over <strong>any part of your screen</strong> — a PDF, a spreadsheet, another
       app entirely — and the image lands in the text box you were typing in. No clipboard
       juggling, no Ctrl&#8209;V.
     </p>
 
+    <div class="cta">
+      <a class="btn" href="#download">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 20h16"/></svg>
+        Download
+      </a>
+      <a class="btn ghost" href="#how">How it works</a>
+    </div>
+
     <div class="demo" aria-label="A region of the screen being snipped and appearing in a chat box">
       <svg viewBox="0 0 780 250" role="img">
         <defs>
-          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#1b1b26"/><stop offset="1" stop-color="#12121a"/>
-          </linearGradient>
           <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-            <path d="M0 0 L10 5 L0 10 z" fill="#7c6cff"/>
+            <path d="M0 0 L10 5 L0 10 z" fill="#4f46e5"/>
           </marker>
         </defs>
 
         <!-- source window -->
-        <rect x="8" y="26" width="330" height="198" rx="12" fill="url(#g1)" stroke="#2a2a38"/>
-        <circle cx="30" cy="48" r="4.5" fill="#3a3a4d"/><circle cx="46" cy="48" r="4.5" fill="#3a3a4d"/>
-        <circle cx="62" cy="48" r="4.5" fill="#3a3a4d"/>
-        <text x="84" y="52" fill="#6e6e80" font-family="ui-sans-serif,system-ui" font-size="11">report.pdf — any app</text>
-        <g fill="#26263a">
+        <rect x="8" y="26" width="330" height="198" rx="13" fill="#fff" stroke="#e9e6e0"/>
+        <circle cx="30" cy="48" r="4" fill="#e4e1da"/><circle cx="45" cy="48" r="4" fill="#e4e1da"/>
+        <circle cx="60" cy="48" r="4" fill="#e4e1da"/>
+        <text x="80" y="52" fill="#8e8e99" font-family="ui-sans-serif,system-ui" font-size="11">report.pdf — any app</text>
+        <g fill="#f0ede8">
           <rect x="30" y="74" width="286" height="9" rx="4.5"/>
           <rect x="30" y="92" width="242" height="9" rx="4.5"/>
         </g>
         <!-- the chart being snipped -->
-        <g>
-          <rect x="30" y="118" width="180" height="86" rx="7" fill="#171722"/>
-          <g fill="#7c6cff" opacity=".85">
-            <rect x="46" y="170" width="17" height="22" rx="2.5"/>
-            <rect x="70" y="154" width="17" height="38" rx="2.5"/>
-            <rect x="94" y="136" width="17" height="56" rx="2.5"/>
-            <rect x="118" y="160" width="17" height="32" rx="2.5"/>
-            <rect x="142" y="144" width="17" height="48" rx="2.5"/>
-            <rect x="166" y="128" width="17" height="64" rx="2.5"/>
-          </g>
+        <rect x="30" y="118" width="180" height="86" rx="8" fill="#f7f6f3"/>
+        <g fill="#4f46e5" opacity=".82">
+          <rect x="46" y="170" width="17" height="22" rx="2.5"/>
+          <rect x="70" y="154" width="17" height="38" rx="2.5"/>
+          <rect x="94" y="136" width="17" height="56" rx="2.5"/>
+          <rect x="118" y="160" width="17" height="32" rx="2.5"/>
+          <rect x="142" y="144" width="17" height="48" rx="2.5"/>
+          <rect x="166" y="128" width="17" height="64" rx="2.5"/>
         </g>
         <!-- selection -->
-        <rect class="ants" x="30" y="118" width="180" height="86" rx="7"
-              fill="none" stroke="#7c6cff" stroke-width="2"/>
-        <g fill="#7c6cff">
-          <rect x="26" y="114" width="8" height="8" rx="2"/><rect x="206" y="114" width="8" height="8" rx="2"/>
-          <rect x="26" y="200" width="8" height="8" rx="2"/><rect x="206" y="200" width="8" height="8" rx="2"/>
+        <rect class="ants" x="30" y="118" width="180" height="86" rx="8"
+              fill="none" stroke="#4f46e5" stroke-width="2"/>
+        <g fill="#fff" stroke="#4f46e5" stroke-width="1.6">
+          <rect x="26.5" y="114.5" width="7" height="7" rx="1.5"/><rect x="206.5" y="114.5" width="7" height="7" rx="1.5"/>
+          <rect x="26.5" y="200.5" width="7" height="7" rx="1.5"/><rect x="206.5" y="200.5" width="7" height="7" rx="1.5"/>
         </g>
-        <rect x="30" y="96" width="62" height="18" rx="5" fill="#7c6cff"/>
-        <text x="61" y="109" fill="#fff" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5">180 × 86</text>
+        <rect x="30" y="94" width="62" height="18" rx="6" fill="#4f46e5"/>
+        <text x="61" y="107" fill="#fff" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5">180 × 86</text>
 
         <!-- arrow -->
-        <path class="pulse" d="M356 125 H420" stroke="#7c6cff" stroke-width="2.4"
+        <path class="pulse" d="M356 125 H420" stroke="#4f46e5" stroke-width="2.4"
               fill="none" marker-end="url(#arrow)" stroke-linecap="round"/>
 
         <!-- destination composer -->
-        <rect x="442" y="26" width="330" height="198" rx="12" fill="url(#g1)" stroke="#2a2a38"/>
-        <text x="466" y="52" fill="#6e6e80" font-family="ui-sans-serif,system-ui" font-size="11">Your chat</text>
-        <rect x="466" y="70" width="282" height="130" rx="10" fill="#0f0f17" stroke="#2f2f42"/>
+        <rect x="442" y="26" width="330" height="198" rx="13" fill="#fff" stroke="#e9e6e0"/>
+        <text x="466" y="52" fill="#8e8e99" font-family="ui-sans-serif,system-ui" font-size="11">Your chat</text>
+        <rect x="466" y="70" width="282" height="130" rx="11" fill="#faf9f7" stroke="#e9e6e0"/>
         <!-- pasted thumbnail -->
-        <g>
-          <rect x="482" y="86" width="96" height="52" rx="6" fill="#171722" stroke="#3a3a55"/>
-          <g fill="#7c6cff" opacity=".85">
-            <rect x="492" y="118" width="8" height="12" rx="1.5"/>
-            <rect x="504" y="110" width="8" height="20" rx="1.5"/>
-            <rect x="516" y="100" width="8" height="30" rx="1.5"/>
-            <rect x="528" y="114" width="8" height="16" rx="1.5"/>
-            <rect x="540" y="106" width="8" height="24" rx="1.5"/>
-            <rect x="552" y="96" width="8" height="34" rx="1.5"/>
-          </g>
+        <rect x="482" y="86" width="96" height="52" rx="7" fill="#fff" stroke="#e4e1da"/>
+        <g fill="#4f46e5" opacity=".82">
+          <rect x="492" y="118" width="8" height="12" rx="1.5"/>
+          <rect x="504" y="110" width="8" height="20" rx="1.5"/>
+          <rect x="516" y="100" width="8" height="30" rx="1.5"/>
+          <rect x="528" y="114" width="8" height="16" rx="1.5"/>
+          <rect x="540" y="106" width="8" height="24" rx="1.5"/>
+          <rect x="552" y="96" width="8" height="34" rx="1.5"/>
         </g>
-        <rect x="482" y="150" width="150" height="9" rx="4.5" fill="#26263a"/>
-        <rect x="482" y="168" width="96" height="9" rx="4.5" fill="#26263a"/>
-        <rect x="714" y="164" width="26" height="26" rx="8" fill="#7c6cff"/>
-        <path d="M722 177 h10 M728 172 l5 5 -5 5" stroke="#fff" stroke-width="2"
+        <g fill="#eceae5">
+          <rect x="482" y="150" width="150" height="9" rx="4.5"/>
+          <rect x="482" y="168" width="96" height="9" rx="4.5"/>
+        </g>
+        <rect x="712" y="162" width="28" height="28" rx="9" fill="#4f46e5"/>
+        <path d="M721 176 h10 M727 171 l5 5 -5 5" stroke="#fff" stroke-width="2"
               fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
   </div>
 
   <!-- ---------------- downloads ---------------- -->
-  <div class="wrap" id="download">
+  <section class="wrap" id="download">
+    <p class="eyebrow">Download</p>
+    <h2>One idea, every device</h2>
+    <p class="section-lede">
+      Windows ships today as a Chrome extension with a small desktop helper. Android and iOS
+      are on the way — each shaped around what its platform actually allows.
+    </p>
+
     <div class="downloads">
 
       <article class="card" id="card-windows">
@@ -349,22 +389,23 @@
             <p class="sub">Chrome extension + desktop helper</p>
           </div>
         </div>
-        <a class="btn" id="dl-windows" href="downloads/SnipPaste-windows.zip" download>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 20h16"/></svg>
+        <a class="btn block" id="dl-windows" href="downloads/SnipPaste-windows.zip" download>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 20h16"/></svg>
           Download for Windows
         </a>
         <div class="meta">
-          <span id="win-version">v1.2.0</span><span id="win-size"></span><span>Chrome / Edge</span>
+          <span id="win-version">v1.3.0</span><span id="win-size"></span><span>Chrome / Edge</span>
         </div>
         <ol class="steps">
           <li>Unzip, then load the folder at <code>chrome://extensions</code> with Developer mode on</li>
           <li>Right-click <code>native\install.ps1</code> → Run with PowerShell</li>
           <li>Restart Chrome. Hover any text box and click the snip button</li>
         </ol>
+        <p class="more"><a href="#install">Full install steps, in detail &rarr;</a></p>
       </article>
 
-      <article class="card" id="card-android">
-        <span class="tag">Your device</span>
+      <article class="card soon" id="card-android">
+        <span class="tag">Coming soon</span>
         <div class="plat">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M6 9h12v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 18V9zm-2.2.6a1.3 1.3 0 0 1 2.6 0v5.2a1.3 1.3 0 0 1-2.6 0V9.6zm13.8 0a1.3 1.3 0 0 1 2.6 0v5.2a1.3 1.3 0 0 1-2.6 0V9.6zM9 20.3a1.3 1.3 0 0 1 2.6 0v1.4a1.3 1.3 0 0 1-2.6 0v-1.4zm3.4 0a1.3 1.3 0 0 1 2.6 0v1.4a1.3 1.3 0 0 1-2.6 0v-1.4zM8.2 3.4l-.9-1.6a.35.35 0 0 1 .6-.35l.93 1.66A6.9 6.9 0 0 1 12 2.6c1.1 0 2.15.2 3.07.55l.94-1.66a.35.35 0 1 1 .6.35l-.9 1.6A5.7 5.7 0 0 1 18 8H6a5.7 5.7 0 0 1 2.2-4.6zM9.4 5.6a.62.62 0 1 0 0 1.25.62.62 0 0 0 0-1.25zm5.2 0a.62.62 0 1 0 0 1.25.62.62 0 0 0 0-1.25z"/>
@@ -374,73 +415,200 @@
             <p class="sub">Standalone app with a floating bubble</p>
           </div>
         </div>
-        <a class="btn" id="dl-android" href="downloads/SnipPaste.apk" download>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 12l5 5 5-5"/><path d="M4 20h16"/></svg>
-          Download the APK
-        </a>
+        <span class="btn disabled block" aria-disabled="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+          Coming soon
+        </span>
         <div class="meta">
-          <span id="apk-version">v1.0</span><span id="apk-size"></span><span>Android 8+</span>
+          <span>In development</span><span>Android 8+</span><span>phones &amp; tablets</span>
         </div>
-        <ol class="steps">
-          <li>Open the APK on the device and allow installing from that source</li>
-          <li>Grant <b>Draw over other apps</b>, then <b>Accessibility → SnipPaste</b></li>
-          <li>Tap <b>Start bubble</b>, then tap the bubble whenever you want to snip</li>
-        </ol>
+        <p class="soon-note">
+          Not ready to download yet. It will be a standalone app rather than a browser add-on:
+          a bubble floating above every app, so a snip drops into ChatGPT, Gemini or Claude
+          <b>in Chrome</b> just as easily as into WhatsApp or email.
+        </p>
+      </article>
+
+      <article class="card soon" id="card-ios">
+        <span class="tag">Coming soon</span>
+        <div class="plat">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M17.05 12.54c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.15-2.76.83-3.48.83-.72 0-1.83-.81-3.01-.79-1.55.02-2.98.9-3.78 2.29-1.61 2.79-.41 6.92 1.16 9.19.77 1.11 1.68 2.35 2.87 2.31 1.15-.05 1.59-.75 2.98-.75s1.78.75 3 .72c1.24-.02 2.02-1.13 2.78-2.24.88-1.29 1.24-2.54 1.26-2.6-.03-.01-2.41-.93-2.42-3.7z"/>
+            <path d="M14.78 5.8c.64-.77 1.07-1.85.95-2.92-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.78-.97 2.83 1.02.08 2.07-.52 2.71-1.29z"/>
+          </svg>
+          <div>
+            <h3>iOS</h3>
+            <p class="sub">Keyboard for iPhone and iPad</p>
+          </div>
+        </div>
+        <span class="btn disabled block" aria-disabled="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+          Coming soon
+        </span>
+        <div class="meta">
+          <span>In development</span><span>iOS 16+</span><span>iPhone &amp; iPad</span>
+        </div>
+        <p class="soon-note">
+          iOS allows no floating bubble over other apps, so this one takes a different shape:
+          a <b>custom keyboard</b>. Snip with the usual iOS screenshot, then switch to the
+          SnipPaste keyboard in any app and the snip goes straight into the field you are
+          typing in.
+        </p>
       </article>
 
     </div>
-  </div>
+  </section>
 
   <!-- ---------------- how to use ---------------- -->
   <section class="wrap" id="how">
-    <h2>How to use it</h2>
+    <p class="eyebrow">How it works</p>
+    <h2>Snip, and it is already there</h2>
     <p class="section-lede">
-      The two builds are driven differently: on Windows the button comes to your text box,
-      on Android a bubble floats above everything.
+      Windows is out now — the snip button comes to your text box. Android and iOS are on the
+      way, and neither works quite the same: a bubble that floats above everything, and a
+      keyboard you switch to.
     </p>
 
     <div class="use">
 
       <div class="panel">
         <div class="head">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M3 5.6l7.5-1v7.1H3V5.6zm0 12.8l7.5 1v-7h-7.5v6zM11.6 4.4L21 3v8.7h-9.4V4.4zm0 15.2L21 21v-8.6h-9.4v7.2z"/>
           </svg>
           <h3>On Windows</h3>
         </div>
         <p class="where">In Chrome or Edge, on any website</p>
         <ol>
-          <li>Hover or click into any text box &mdash; a small snip button appears in its corner.</li>
-          <li>Click it, or press <span class="inline-code">Alt+Shift+S</span>.</li>
-          <li>The Windows snipping overlay takes over the screen. Drag a box over anything &mdash;
+          <li>Hover or click into any text box — a small snip button appears in its corner.</li>
+          <li>Click it to snip, or press <span class="inline-code">Alt+Shift+S</span>. Rest on it
+              instead and a short menu opens — <b>Explain this</b>, <b>Answer this</b>,
+              <b>Summarise this</b>, <b>Translate to English</b>, <b>Extract the text</b>.</li>
+          <li>The Windows snipping overlay takes over the screen. Drag a box over anything —
               a PDF in Acrobat, a spreadsheet, a second monitor.</li>
-          <li>Let go. The image is already in the text box. Press Enter.</li>
+          <li>Let go. The image is already in the text box — along with the prompt you picked,
+              if you picked one. Press Enter.</li>
         </ol>
         <p class="works">
-          <b>Works in:</b> ChatGPT, Gemini, Claude, Perplexity, Gmail, Notion &mdash; any page with
-          a text box. Press <span class="inline-code">Esc</span> to cancel a snip.
+          <b>Works in:</b> ChatGPT, Gemini, Claude, Perplexity, Gmail, Notion — any page with a
+          text box. Press <span class="inline-code">Esc</span> to cancel a snip.
         </p>
       </div>
 
-      <div class="panel">
+      <div class="panel soon">
         <div class="head">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M6 9h12v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 18V9zm-2.2.6a1.3 1.3 0 0 1 2.6 0v5.2a1.3 1.3 0 0 1-2.6 0V9.6zm13.8 0a1.3 1.3 0 0 1 2.6 0v5.2a1.3 1.3 0 0 1-2.6 0V9.6zM9 20.3a1.3 1.3 0 0 1 2.6 0v1.4a1.3 1.3 0 0 1-2.6 0v-1.4zm3.4 0a1.3 1.3 0 0 1 2.6 0v1.4a1.3 1.3 0 0 1-2.6 0v-1.4zM8.2 3.4l-.9-1.6a.35.35 0 0 1 .6-.35l.93 1.66A6.9 6.9 0 0 1 12 2.6c1.1 0 2.15.2 3.07.55l.94-1.66a.35.35 0 1 1 .6.35l-.9 1.6A5.7 5.7 0 0 1 18 8H6a5.7 5.7 0 0 1 2.2-4.6zM9.4 5.6a.62.62 0 1 0 0 1.25.62.62 0 0 0 0-1.25zm5.2 0a.62.62 0 1 0 0 1.25.62.62 0 0 0 0-1.25z"/>
           </svg>
           <h3>On Android</h3>
+          <span class="pill">Coming soon</span>
         </div>
-        <p class="where">In every app, including websites in Chrome</p>
+        <p class="where">Planned: every app, including websites in Chrome</p>
         <ol>
-          <li>Open SnipPaste once and tap <b>Start bubble</b>. A small bubble now floats above
-              whatever you are doing &mdash; drag it anywhere.</li>
+          <li>Open SnipPaste once and tap <b>Start bubble</b>. A small bubble floats above
+              whatever you are doing — drag it anywhere.</li>
           <li>Open the app or website you want to type in and tap into its text box.</li>
           <li>Tap the bubble. The screen freezes; drag a box over any part of it.</li>
           <li>Let go. The snip is pasted into the field you were typing in.</li>
         </ol>
         <p class="works">
-          <b>Works in:</b> anything on the device. It is not a browser add-on &mdash; it is a
+          <b>Will work in:</b> anything on the device. It is not a browser add-on — it is a
           system-wide bubble, so ChatGPT/Gemini/Claude <b>in Chrome</b> and their standalone
-          apps both work, as do WhatsApp, email and notes.
+          apps would both work, as would WhatsApp, email and notes.
+        </p>
+      </div>
+
+      <div class="panel soon">
+        <div class="head">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M17.05 12.54c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.15-2.76.83-3.48.83-.72 0-1.83-.81-3.01-.79-1.55.02-2.98.9-3.78 2.29-1.61 2.79-.41 6.92 1.16 9.19.77 1.11 1.68 2.35 2.87 2.31 1.15-.05 1.59-.75 2.98-.75s1.78.75 3 .72c1.24-.02 2.02-1.13 2.78-2.24.88-1.29 1.24-2.54 1.26-2.6-.03-.01-2.41-.93-2.42-3.7z"/>
+            <path d="M14.78 5.8c.64-.77 1.07-1.85.95-2.92-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.78-.97 2.83 1.02.08 2.07-.52 2.71-1.29z"/>
+          </svg>
+          <h3>On iOS</h3>
+          <span class="pill">Coming soon</span>
+        </div>
+        <p class="where">Planned: any app you can type in</p>
+        <ol>
+          <li>Add the SnipPaste keyboard once, in <b>Settings → General → Keyboard</b>.</li>
+          <li>Take a screenshot the way you always do, and crop it to the part you want.</li>
+          <li>In any app, tap into the text box and switch to the SnipPaste keyboard.</li>
+          <li>Tap the snip. It goes into the field you were typing in.</li>
+        </ol>
+        <p class="works">
+          <b>Why a keyboard:</b> iOS gives no app the right to float over others or to read the
+          screen, so the bubble Android uses is impossible. A keyboard extension is the one
+          place the system lets an app insert an image into whatever you are typing in.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ---------------- install ---------------- -->
+  <section class="wrap" id="install">
+    <p class="eyebrow">Install on Windows</p>
+    <h2>Two steps, both one-time</h2>
+    <p class="section-lede">
+      SnipPaste is not on the Chrome Web Store, so it loads the way any unpacked extension
+      does — through Developer mode. Nothing here needs admin rights.
+    </p>
+
+    <div class="use">
+
+      <div class="panel">
+        <div class="head">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5z"/>
+            <path d="M4 9h16"/><circle cx="7" cy="6.6" r=".6" fill="currentColor" stroke="none"/>
+          </svg>
+          <h3>1 · Load the extension</h3>
+        </div>
+        <p class="where">In Chrome, or Edge — the steps are identical</p>
+        <ol>
+          <li><b>Unzip</b> the download somewhere you will keep it. Chrome loads the extension
+              from this folder every time it starts, and the helper stores its path — so if you
+              move it later, you will need to re-run step 2.</li>
+          <li>Open a new tab and go to <span class="inline-code">chrome://extensions</span>
+              (on Edge, <span class="inline-code">edge://extensions</span>).</li>
+          <li>Turn on <b>Developer mode</b> with the toggle in the <b>top-right</b> corner. Three
+              buttons appear along the top of the page.</li>
+          <li>Click <b>Load unpacked</b>, then pick the unzipped <span class="inline-code">snippaste</span>
+              folder itself — the one containing <span class="inline-code">manifest.json</span>,
+              not its parent.</li>
+          <li>SnipPaste appears in the list. Click the puzzle-piece icon in the toolbar and
+              <b>pin</b> it if you want the status popup within reach.</li>
+        </ol>
+        <p class="works">
+          Keep Developer mode on. Chrome disables unpacked extensions when it is switched off,
+          and may ask you to confirm them again after an update.
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="head">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 17.5V6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11"/>
+            <path d="M3 20h18"/><path d="M9.5 9.5 12 12l-2.5 2.5"/>
+          </svg>
+          <h3>2 · Install the desktop helper</h3>
+        </div>
+        <p class="where">A small program that opens the Windows snip overlay</p>
+        <ol>
+          <li>Open the <span class="inline-code">native</span> folder inside the one you unzipped.</li>
+          <li>Right-click <span class="inline-code">install.ps1</span> and choose
+              <b>Run with PowerShell</b>. If Windows blocks it, open PowerShell in that folder and
+              run <span class="inline-code">powershell -ExecutionPolicy Bypass -File install.ps1</span>.</li>
+          <li>It compiles the helper with the .NET compiler already on your machine, registers it
+              for Chrome and Edge, and prints what it did. Everything stays under your user
+              account.</li>
+          <li><b>Restart Chrome completely</b> — every window — so it picks the helper up.</li>
+          <li>Click the SnipPaste icon. A green dot and <b>Desktop helper ready</b> means both
+              steps worked.</li>
+        </ol>
+        <p class="works">
+          <b>Skipping this step?</b> The button still works, but it can only snip the current
+          page — not other apps. To remove the helper later, run
+          <span class="inline-code">native\uninstall.ps1</span>.
         </p>
       </div>
 
@@ -448,39 +616,50 @@
   </section>
 
   <!-- ---------------- notes ---------------- -->
-  <section class="wrap" id="install">
-    <h2>Before you install</h2>
-    <p class="section-lede">Things worth knowing up front, rather than after.</p>
+  <section class="wrap" id="notes">
+    <p class="eyebrow">Before you install</p>
+    <h2>Worth knowing up front</h2>
+    <p class="section-lede">A few things that are easier to read now than to discover later.</p>
     <div class="notes">
-      <div class="note info">
+      <div class="note">
+        <span class="dot"></span>
         <div><b>Nothing leaves your machine.</b> There is no network code in either build. Snips
         go straight from the screen into the text box.</div>
       </div>
-      <div class="note info">
-        <div><b>Windows: the helper is compiled on your computer</b> from the C# source in the
+      <div class="note">
+        <span class="dot"></span>
+        <div><b>The Windows helper is compiled on your computer</b> from the C# source in the
         zip, using the .NET compiler already present in Windows. No unsigned binary is
         downloaded, and it registers only for your user account.</div>
       </div>
-      <div class="note">
+      <div class="note warn">
+        <span class="dot"></span>
         <div><b>Windows needs the Snipping Tool</b>, which ships with every Windows 10 (1809+)
-        and Windows 11 install. The helper opens it via <span class="inline-code">ms-screenclip:</span>.</div>
+        and Windows 11 install. The helper opens it via <span class="inline-code">ms-screenclip:</span></div>
       </div>
-      <div class="note">
-        <div><b>Android 13+ hides the Accessibility toggle for sideloaded apps.</b> If it looks
-        greyed out: <b>Settings → Apps → SnipPaste → ⋮ → Allow restricted settings</b>. Without
-        it, snips are copied to the clipboard and a share sheet opens instead of pasting
-        automatically.</div>
-      </div>
-      <div class="note">
-        <div><b>The Android build has not been run-tested.</b> It compiles, packages and signs
-        cleanly, and its manifest is correct, but it has never been exercised on real hardware.
-        Treat the first run as a shakedown.</div>
+      <div class="note warn">
+        <span class="dot"></span>
+        <div><b>Android and iOS are not available yet.</b> Android is being built and tested on
+        real hardware; iOS has not started. Only the Windows download is live.</div>
       </div>
     </div>
   </section>
 
   <footer class="wrap">
-    <div>SnipPaste — snip anything on screen, paste it automatically.</div>
+    <div class="foot-row">
+      <div>SnipPaste — snip anything on screen, paste it automatically.</div>
+      <div class="foot-links">
+        <a class="coffee" href="https://buymeacoffee.com/vipersouradip" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 9h13v6.5a4.5 4.5 0 0 1-4.5 4.5h-4A4.5 4.5 0 0 1 4 15.5z"/>
+            <path d="M17 11h1.4a2.6 2.6 0 0 1 0 5.2H17"/>
+            <path d="M8 3.4v2M12 3.4v2"/>
+          </svg>
+          Buy me a coffee
+        </a>
+        <a href="#top">Back to top</a>
+      </div>
+    </div>
     <div class="hashes" id="hashes"></div>
   </footer>
 </main>
@@ -499,21 +678,15 @@
       set('win-version', 'v' + data.windows.version);
       if (data.windows.file) set('win-size', data.windows.file.size);
     }
-    if (data.android) {
-      set('apk-version', 'v' + data.android.version);
-      if (data.android.file) set('apk-size', data.android.file.size);
+    // The Android build is not shipping yet, so its card stays a placeholder and
+    // only Windows can ever be the recommended one.
+    if (/Windows NT/i.test(navigator.userAgent)) {
+      document.getElementById('card-windows').classList.add('recommended');
     }
-
-    // Lead with whatever the visitor is actually on.
-    var ua = navigator.userAgent;
-    var isAndroid = /Android/i.test(ua);
-    var isWindows = /Windows NT/i.test(ua);
-    if (isAndroid) document.getElementById('card-android').classList.add('recommended');
-    else if (isWindows) document.getElementById('card-windows').classList.add('recommended');
 
     // Checksums, so a download can be verified before it is trusted.
     var rows = [];
-    ['windows', 'android'].forEach(function (key) {
+    ['windows'].forEach(function (key) {
       var f = data[key] && data[key].file;
       if (f) rows.push('<span>' + f.name + '</span>  sha256 ' + f.sha256);
     });

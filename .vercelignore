@@ -6,6 +6,7 @@
 /test
 /tools
 /icons
+/browsers
 /manifest.json
 /README.md
 *.pem

@@ -7,3 +7,6 @@ android/build/
 android/SnipPaste.apk.idsig
 native/SnipPasteHost.exe
 node_modules/
+
+# Chrome for Testing, downloaded on demand by the test suites
+browsers/

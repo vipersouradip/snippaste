@@ -2,6 +2,8 @@
    1. Anchors a small snip button to whatever text box the user is using.
    2. Click it: the desktop helper opens Windows' own snipping overlay.
    3. The returned PNG is injected into that text box automatically.
+   Hovering the button first opens a menu of prompts ("Explain", "Answer", …);
+   picking one snips as usual and types that prompt in alongside the image.
 
    If the helper is not installed, it falls back to snipping this page with a
    frozen-screenshot overlay so the button still does something useful.
@@ -176,18 +178,46 @@
     .btn:hover { opacity: 1; transform: scale(1.08); background: rgba(108,92,255,.95); border-color: rgba(255,255,255,.3); }
     .btn:active { transform: scale(.94); }
     .btn.hidden { display: none; }
-    .tip {
-      position: fixed; padding: 6px 9px; border-radius: 6px; white-space: nowrap;
-      background: rgba(18,18,24,.95); color: #f4f4f5;
-      font: 500 11px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
-      box-shadow: 0 4px 16px rgba(0,0,0,.34); pointer-events: none; opacity: 0;
-      transition: opacity .12s; border: 1px solid rgba(255,255,255,.13);
+    /* Laid out at all times so it can be measured before it is shown; hidden
+       with visibility, which also keeps it out of elementFromPoint. */
+    .menu {
+      position: fixed; top: 0; left: 0; min-width: 168px; padding: 5px;
+      border-radius: 10px; background: rgba(18,18,24,.97); color: #f4f4f5;
+      border: 1px solid rgba(255,255,255,.13);
+      box-shadow: 0 10px 34px rgba(0,0,0,.5);
+      font: 500 12.5px/1.4 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      visibility: hidden; opacity: 0; pointer-events: none;
+      transition: opacity .12s;
     }
-    .tip.show { opacity: 1; }
-    .tip b { color: #b9b4ff; font-weight: 600; }
+    .menu.show { visibility: visible; opacity: 1; pointer-events: auto; }
+    .item {
+      display: block; padding: 7px 10px; border-radius: 7px;
+      cursor: pointer; white-space: nowrap; color: #e9e9ef;
+    }
+    .item:hover { background: rgba(108,92,255,.92); color: #fff; }
+    .sep { height: 1px; margin: 4px 6px; background: rgba(255,255,255,.1); }
+    .foot {
+      padding: 4px 10px 3px; color: #9a9aa6;
+      font: 500 10.5px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+    .foot b { color: #b9b4ff; font-weight: 600; }
   `;
 
-  let host = null, btn = null;
+  /* Picking one of these snips as usual, then types the prompt in with the image,
+     so the whole thing goes off as one message. "Just snip" keeps the old behaviour. */
+  const ACTIONS = [
+    { label: 'Explain this', prompt: 'Explain this.' },
+    { label: 'Answer this', prompt: 'Answer this.' },
+    { label: 'Summarise this', prompt: 'Summarise this.' },
+    { label: 'Translate to English', prompt: 'Translate this into English.' },
+    { label: 'Extract the text', prompt: 'Transcribe all the text in this image.' },
+    null,
+    { label: 'Just snip', prompt: '' }
+  ];
+
+  let host = null, btn = null, menu = null;
+  let menuOpen = false, menuTimer = 0;
   let target = null;          // element the button is currently attached to
   let lastEditable = null;    // last text box the user touched
   let hovered = null, focused = null;
@@ -204,25 +234,39 @@
     btn = el('div', 'btn hidden');
     btn.appendChild(snipIcon());
 
-    const tip = el('div', 'tip');
+    menu = el('div', 'menu');
+    for (const action of ACTIONS) {
+      if (!action) { menu.appendChild(el('div', 'sep')); continue; }
+      const item = el('div', 'item');
+      item.textContent = action.label;
+      item.setAttribute('role', 'button');
+      // mousedown would blur the text box before we get to remember it.
+      item.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
+      item.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        closeMenu();
+        startSnip(action.prompt);
+      });
+      menu.appendChild(item);
+    }
+    const foot = el('div', 'foot');
     const key = el('b');
     key.textContent = 'Alt+Shift+S';
-    tip.append('Snip anything on screen  ', key);
+    foot.append('Snip without a prompt: ', key);
+    menu.appendChild(foot);
 
     btn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
     btn.addEventListener('click', (e) => {
       e.preventDefault(); e.stopPropagation();
+      closeMenu();
       startSnip();
     });
-    btn.addEventListener('mouseenter', () => {
-      const r = btn.getBoundingClientRect();
-      tip.classList.add('show');
-      tip.style.top = Math.max(4, r.top - 32) + 'px';
-      tip.style.left = Math.max(4, Math.min(innerWidth - 220, r.right - 210)) + 'px';
-    });
-    btn.addEventListener('mouseleave', () => tip.classList.remove('show'));
+    btn.addEventListener('pointerenter', scheduleOpenMenu);
+    btn.addEventListener('pointerleave', scheduleCloseMenu);
+    menu.addEventListener('pointerenter', () => clearTimeout(menuTimer));
+    menu.addEventListener('pointerleave', scheduleCloseMenu);
 
-    root.append(btn, tip);
+    root.append(btn, menu);
     (document.body || document.documentElement).appendChild(host);
   }
 
@@ -230,7 +274,47 @@
     if (!host || !host.isConnected) { host = null; buildButton(); }
   }
 
+  const MENU_GAP = 6;
+
+  /* Above the button when there is room, otherwise below; right edges aligned. */
+  function positionMenu() {
+    if (!menuOpen || !menu) return;
+    const r = btn.getBoundingClientRect();
+    const mw = menu.offsetWidth, mh = menu.offsetHeight;
+    let top = r.top - mh - MENU_GAP;
+    if (top < 4) top = r.bottom + MENU_GAP;
+    menu.style.top = Math.round(clamp(top, 4, Math.max(4, innerHeight - mh - 4))) + 'px';
+    menu.style.left = Math.round(clamp(r.right - mw, 4, Math.max(4, innerWidth - mw - 4))) + 'px';
+  }
+
+  function openMenu() {
+    clearTimeout(menuTimer);
+    if (menuOpen || snipping || !menu || btn.classList.contains('hidden')) return;
+    menuOpen = true;
+    menu.classList.add('show');
+    positionMenu();
+  }
+
+  function closeMenu() {
+    clearTimeout(menuTimer);
+    if (!menuOpen) return;
+    menuOpen = false;
+    menu.classList.remove('show');
+  }
+
+  function scheduleOpenMenu() {
+    clearTimeout(menuTimer);
+    menuTimer = setTimeout(openMenu, 130);
+  }
+
+  /* A grace period, so crossing the gap between button and menu does not close it. */
+  function scheduleCloseMenu() {
+    clearTimeout(menuTimer);
+    menuTimer = setTimeout(closeMenu, 220);
+  }
+
   function hideButton() {
+    closeMenu();
     if (btn) btn.classList.add('hidden');
     target = null;
     lastRectKey = '';
@@ -338,6 +422,7 @@
     btn.style.left = Math.round(clamp(left, 2, innerWidth - BTN_SIZE - 2)) + 'px';
     btn.style.top = Math.round(clamp(top, 2, innerHeight - BTN_SIZE - 2)) + 'px';
     btn.classList.remove('hidden');
+    positionMenu();
   }
 
   function track() {
@@ -349,6 +434,9 @@
 
   function refreshButton() {
     if (snipping) { setHostVisible(false); return; }
+    // While the prompt menu is open the pointer is off the text box by design;
+    // leave the button exactly where it is rather than hiding it out from under it.
+    if (menuOpen) return;
     if (!settings.showButton) { hideButton(); return; }
     setHostVisible(true);
     const next = (focused && focused.isConnected) ? focused
@@ -386,8 +474,13 @@
     else hoverTimer = setTimeout(refreshButton, 260);
   }, true);
 
-  addEventListener('scroll', () => { lastRectKey = ''; }, true);
-  addEventListener('resize', () => { lastRectKey = ''; refreshButton(); });
+  addEventListener('scroll', () => { lastRectKey = ''; closeMenu(); }, true);
+  addEventListener('resize', () => { lastRectKey = ''; closeMenu(); refreshButton(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); }, true);
+  document.addEventListener('pointerdown', (e) => {
+    if (host && e.composedPath && e.composedPath().includes(host)) return;
+    closeMenu();
+  }, true);
 
   /* ------------------------------------------------------------------ */
   /* Image decoding                                                       */
@@ -592,7 +685,7 @@
     return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
   }
 
-  async function pageSnip(anchor) {
+  async function pageSnip(anchor, prompt) {
     let frame = null;
     try {
       await twoFrames();   // let the button actually disappear before the screenshot
@@ -601,7 +694,7 @@
       if (!region) return;
       const blob = await cropToBlob(frame, region);
       if (!blob) throw new Error('could not encode the snip');
-      await deliver(blob, anchor);
+      await deliver(blob, anchor, prompt);
     } finally {
       if (frame && frame.source && frame.source.close) frame.source.close();
     }
@@ -684,6 +777,39 @@
     return false;
   }
 
+  /* Types the chosen prompt into the composer next to the image.
+
+     execCommand('insertText') goes through the browser's own editing pipeline, so
+     React, ProseMirror and Lexical all see the beforeinput/input they expect —
+     assigning .value or .textContent directly is what these composers ignore. */
+  function insertPrompt(node, text) {
+    if (!text) return false;
+    focusEditable(node);
+
+    const existing = node.isContentEditable ? node.textContent : node.value;
+    const body = (existing && !/\s$/.test(existing)) ? ' ' + text : text;
+
+    try { if (document.execCommand('insertText', false, body)) return true; } catch { /* not editable */ }
+
+    try {
+      const dt = new DataTransfer();
+      dt.setData('text/plain', body);
+      const ev = new ClipboardEvent('paste', {
+        clipboardData: dt, bubbles: true, cancelable: true, composed: true
+      });
+      if (node.dispatchEvent(ev) === false) return true;
+    } catch { /* ClipboardEvent construction is blocked in some frames */ }
+
+    if (!node.isContentEditable && 'value' in node) {
+      const proto = node.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+      setter.call(node, (existing || '') + body);
+      node.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+      return true;
+    }
+    return false;
+  }
+
   async function copyToClipboard(blob) {
     try {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
@@ -691,7 +817,7 @@
     } catch { return false; }
   }
 
-  async function deliver(blob, anchor) {
+  async function deliver(blob, anchor, prompt) {
     const file = new File([blob], 'snip-' + Date.now() + '.png', { type: 'image/png', lastModified: Date.now() });
 
     let node = (anchor && anchor.isConnected) ? anchor : null;
@@ -708,12 +834,23 @@
     focusEditable(node);
     await raf();
 
-    if (tryPaste(node, file)) { toast('Pasted'); return; }
-    if (tryDrop(node, file)) { toast('Pasted'); return; }
-    if (tryFileInput(node, file)) { toast('Attached'); return; }
+    let how = null;
+    if (tryPaste(node, file)) how = 'Pasted';
+    else if (tryDrop(node, file)) how = 'Pasted';
+    else if (tryFileInput(node, file)) how = 'Attached';
 
-    if (await copyToClipboard(blob)) toast('Copied to clipboard — press Ctrl+V to paste');
-    else toast('This box did not accept the image');
+    if (!how) {
+      insertPrompt(node, prompt);
+      if (await copyToClipboard(blob)) toast('Copied to clipboard — press Ctrl+V to paste');
+      else toast('This box did not accept the image');
+      return;
+    }
+
+    /* Let the site finish turning the file into an attachment before typing,
+       or the prompt lands in a box that is about to be re-rendered. */
+    await twoFrames();
+    if (insertPrompt(node, prompt)) toast(how + ' with your prompt');
+    else toast(how);
   }
 
   /* ------------------------------------------------------------------ */
@@ -756,9 +893,10 @@
   /* Orchestration                                                        */
   /* ------------------------------------------------------------------ */
 
-  async function startSnip() {
+  async function startSnip(prompt) {
     if (snipping) return;
     snipping = true;
+    closeMenu();
 
     /* Remember the destination now — the snip overlay takes focus next. */
     const anchor = ((target && target.isConnected) ? target : null)
@@ -773,13 +911,13 @@
       const res = await sendMsg({ type: 'nativeSnip' });
 
       if (res.dataUrl) {
-        await deliver(dataUrlToBlob(res.dataUrl), anchor);
+        await deliver(dataUrlToBlob(res.dataUrl), anchor, prompt);
         return;
       }
       if (res.error === 'cancelled') return;          // user pressed Esc in the overlay
       if (res.error === 'no-host') {
         toast('Desktop helper not installed — snipping this page instead', 3200);
-        await pageSnip(anchor);
+        await pageSnip(anchor, prompt);
         return;
       }
       toast('Snip failed: ' + res.error);
@@ -796,7 +934,7 @@
 
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg && msg.type === 'startSnip') {
-      startSnip();
+      startSnip(msg.prompt);
       sendResponse({ ok: true });
     }
     return false;

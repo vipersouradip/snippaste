@@ -251,6 +251,103 @@ async function phaseFallbackRoundTrip() {
     check('image ended up inside the contenteditable',
       await evaluate(cdp, `document.querySelectorAll('#ce img').length`) === 1);
 
+    /* Same round trip again, but asking for a prompt: the image and the text
+       both have to land in the composer. */
+    await evaluate(cdp, `
+      (() => {
+        lines.length = 0;
+        document.getElementById('log').textContent = '';
+        const box = document.getElementById('ce');
+        box.querySelectorAll('img').forEach((n) => n.remove());
+        box.textContent = '';
+        box.focus();
+        return 1;
+      })()`);
+
+    await evaluate(sw, `chrome.tabs.sendMessage(${tabId}, { type: 'startSnip', prompt: 'Explain this.' }).then(() => 1)`);
+
+    let overlay2 = false;
+    for (let i = 0; i < 40 && !overlay2; i++) {
+      overlay2 = await evaluate(cdp, `!!document.querySelector('div[data-snippaste="overlay"]')`);
+      if (!overlay2) await sleep(150);
+    }
+    check('prompted snip opens the overlay too', overlay2 === true);
+
+    await mouse('mousePressed', x0, y0, 1);
+    await mouse('mouseMoved', (x0 + x1) / 2, (y0 + y1) / 2, 1);
+    await mouse('mouseMoved', x1, y1, 1);
+    await mouse('mouseReleased', x1, y1, 0);
+    await sleep(1500);
+
+    const withPrompt = await evaluate(cdp, `
+      (() => {
+        const ce = document.getElementById('ce');
+        return { text: ce.textContent.trim(), imgs: ce.querySelectorAll('img').length };
+      })()`);
+    check('prompt is typed into the composer with the image',
+      withPrompt.text === 'Explain this.' && withPrompt.imgs === 1,
+      JSON.stringify(withPrompt));
+
+    /* Clicking the button itself means "just snip": the hover menu is open by
+       then, and none of its prompts may leak into the composer. */
+    await evaluate(cdp, `
+      (() => {
+        lines.length = 0;
+        document.getElementById('log').textContent = '';
+        const box = document.getElementById('ce');
+        box.querySelectorAll('img').forEach((n) => n.remove());
+        box.textContent = '';
+        box.focus();
+        return 1;
+      })()`);
+    await sleep(500);
+
+    const btnRect = await evaluate(cdp, `
+      (() => {
+        const host = document.querySelector('div[data-snippaste="button"]');
+        if (!host) return null;
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (let y = 0; y < innerHeight; y += 2) for (let x = 0; x < innerWidth; x += 2) {
+          if (document.elementFromPoint(x, y) === host) {
+            if (x < minX) minX = x; if (x > maxX) maxX = x;
+            if (y < minY) minY = y; if (y > maxY) maxY = y;
+          }
+        }
+        return minX === Infinity ? null : { x: (minX + maxX) / 2, y: (minY + maxY) / 2 };
+      })()`);
+
+    if (!btnRect) {
+      check('clicking the button snips with no prompt', false, 'button not painted');
+    } else {
+      const bx = Math.round(btnRect.x), by = Math.round(btnRect.y);
+      // Hover long enough for the menu to open, then click the button anyway.
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: bx, y: by, buttons: 0 });
+      await sleep(500);
+      await mouse('mousePressed', bx, by, 1);
+      await mouse('mouseReleased', bx, by, 0);
+
+      let overlay3 = false;
+      for (let i = 0; i < 40 && !overlay3; i++) {
+        overlay3 = await evaluate(cdp, `!!document.querySelector('div[data-snippaste="overlay"]')`);
+        if (!overlay3) await sleep(150);
+      }
+      check('clicking the button starts a snip', overlay3 === true);
+
+      await mouse('mousePressed', x0, y0, 1);
+      await mouse('mouseMoved', (x0 + x1) / 2, (y0 + y1) / 2, 1);
+      await mouse('mouseMoved', x1, y1, 1);
+      await mouse('mouseReleased', x1, y1, 0);
+      await sleep(1500);
+
+      const plain = await evaluate(cdp, `
+        (() => {
+          const box = document.getElementById('ce');
+          return { text: box.textContent.trim(), imgs: box.querySelectorAll('img').length };
+        })()`);
+      check('clicking the button snips with no prompt',
+        plain.imgs === 1 && plain.text === '', JSON.stringify(plain));
+    }
+
     const thrown = cdp.events.filter((e) => e.method === 'Runtime.exceptionThrown').length;
     check('no page-side exceptions', thrown === 0, thrown ? thrown + ' thrown' : '');
 

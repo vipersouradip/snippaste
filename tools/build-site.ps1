@@ -1,7 +1,7 @@
 # Packages both downloads and refreshes the homepage's file details.
 #
 #   site/downloads/SnipPaste-windows.zip   extension + native helper source
-#   site/downloads/SnipPaste.apk           the Android build
+#   (no apk - Android is still "coming soon" on the page)
 #   site/downloads.js                      sizes, hashes and versions for the page
 #
 # Run:  powershell -ExecutionPolicy Bypass -File tools\build-site.ps1
@@ -67,13 +67,11 @@ $leaked = [System.IO.Compression.ZipFile]::OpenRead($zip).Entries |
 if ($leaked) { throw "Refusing to ship: $($leaked.FullName)" }
 
 # --- Android apk ----------------------------------------------------------
-$apkSource = Join-Path $root 'android\SnipPaste.apk'
+# The page says "coming soon", so the apk is deliberately not published: an
+# untested build sitting behind a live download link is worse than no link.
+# Restore the copy below once the page offers Android for real.
 $apk = Join-Path $downloads 'SnipPaste.apk'
-if (Test-Path $apkSource) {
-  Copy-Item $apkSource $apk -Force
-} else {
-  Write-Warning 'android\SnipPaste.apk not found - run android\build.ps1 first'
-}
+Remove-Item $apk -Force -ErrorAction SilentlyContinue
 
 # --- details for the page -------------------------------------------------
 function FileInfo($path) {
@@ -87,11 +85,8 @@ function FileInfo($path) {
   }
 }
 
-$apkVersion = ([xml](Get-Content (Join-Path $root 'android\AndroidManifest.xml'))).manifest.versionName
-
 $info = [ordered]@{
   windows = [ordered]@{ version = $extensionVersion; file = (FileInfo $zip) }
-  android = [ordered]@{ version = $apkVersion;       file = (FileInfo $apk) }
 }
 
 "window.SNIPPASTE = " + ($info | ConvertTo-Json -Depth 5) + ";" |

@@ -5,13 +5,6 @@
   "cleanUrls": true,
   "headers": [
     {
-      "source": "/downloads/SnipPaste.apk",
-      "headers": [
-        { "key": "Content-Type", "value": "application/vnd.android.package-archive" },
-        { "key": "Content-Disposition", "value": "attachment; filename=\"SnipPaste.apk\"" }
-      ]
-    },
-    {
       "source": "/downloads/SnipPaste-windows.zip",
       "headers": [
         { "key": "Content-Type", "value": "application/zip" },

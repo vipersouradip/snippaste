@@ -5,6 +5,10 @@
    mic. Each case here asserts the button sits inside the visible composer and
    clear of that site's own controls.
 
+   It also covers the hover prompt menu, which needs real mouse input: a
+   synthetic pointerover fires no pointerenter and no :hover, so the menu is
+   opened here through CDP's input pipeline, the same as a user's cursor.
+
    Run: node tools/serve.js, then node tools/placement-test.js              */
 
 const { spawn } = require('child_process');
@@ -71,6 +75,26 @@ const PROBE = (id) => `
               && b.top >= box.top - 1 && b.bottom <= box.bottom + 1,
       overlaps: hits.map((h) => h.text)
     };
+  })()`;
+
+/* The whole host's painted area — the button plus, when open, the prompt menu.
+   Both live in the same closed shadow root, so hit testing is the only way in. */
+const HOST_AREA = `
+  (() => {
+    const host = document.querySelector('div[data-snippaste="button"]');
+    if (!host) return null;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, hits = 0;
+    for (let y = 0; y < innerHeight; y += 3) {
+      for (let x = 0; x < innerWidth; x += 3) {
+        if (document.elementFromPoint(x, y) === host) {
+          hits++;
+          if (x < minX) minX = x; if (x > maxX) maxX = x;
+          if (y < minY) minY = y; if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (!hits) return null;
+    return { w: maxX - minX + 3, h: maxY - minY + 3, top: minY, left: minX };
   })()`;
 
 /* The shadow root is closed, so read the button's position from the page side
@@ -153,6 +177,50 @@ const FIND_BTN_RECT = `
         check(`${label}: inside the composer box`, r.inside,
           `button ${r.button.l},${r.button.t}-${r.button.r},${r.button.bo} vs box ${r.box.l},${r.box.t}-${r.box.r},${r.box.bo}`);
       }
+    }
+
+    /* ---- the hover prompt menu ---- */
+    await evaluate(cdp, `
+      document.getElementById('cg').dispatchEvent(
+        new PointerEvent('pointerover', { bubbles: true, composed: true }));
+      document.getElementById('cg').focus(); 1`);
+    await sleep(500);
+    await evaluate(cdp, FIND_BTN_RECT);
+    const btn = await evaluate(cdp, 'window.__btnRect');
+
+    if (!btn) {
+      check('hover opens the prompt menu', false, 'button not painted');
+    } else {
+      const closed = await evaluate(cdp, HOST_AREA);
+      const cx = Math.round((btn.left + btn.right) / 2);
+      const cy = Math.round((btn.top + btn.bottom) / 2);
+
+      // Real input, so :hover and pointerenter both fire.
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: cx, y: cy, buttons: 0 });
+      await sleep(600);
+      const open = await evaluate(cdp, HOST_AREA);
+
+      const grew = !!(closed && open && open.h > closed.h + 80 && open.w > closed.w + 80);
+      check('hover opens the prompt menu', grew,
+        (closed ? closed.w + 'x' + closed.h : '?') + ' -> ' + (open ? open.w + 'x' + open.h : '?'));
+
+      // A menu is allowed to cover the page beneath it — what it must never do
+      // is run off the edge of the screen, which is where the items get lost.
+      const onScreen = await evaluate(cdp,
+        '({ w: innerWidth, h: innerHeight })');
+      const fits = !!(open && open.left >= 0 && open.top >= 0
+        && open.left + open.w <= onScreen.w + 1 && open.top + open.h <= onScreen.h + 1);
+      check('open menu stays inside the viewport', fits,
+        open ? open.left + ',' + open.top + ' ' + open.w + 'x' + open.h
+             + ' in ' + onScreen.w + 'x' + onScreen.h : 'no menu');
+
+      // Moving away closes it again.
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 8, y: 8, buttons: 0 });
+      await sleep(700);
+      const after = await evaluate(cdp, HOST_AREA);
+      check('menu closes when the pointer leaves',
+        !!(after && closed && after.h <= closed.h + 8),
+        after ? after.w + 'x' + after.h : 'host gone');
     }
 
     cdp.close();
