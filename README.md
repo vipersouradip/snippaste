@@ -10,9 +10,9 @@
 
 ### Demo
 
-<video src="SnipPaste Demo Windows.mp4" controls width="100%" style="border-radius:16px; border:1px solid #E8E5DD"></video>
+<video src="demo.mp4" controls width="100%" style="border-radius:16px; border:1px solid #E8E5DD"></video>
 
-> Windows 11 · live recording · no cuts — drag any region → auto-pasted
+> Windows 11 · live recording · no cuts — drag any region → auto-pasted — file: [`demo.mp4`](demo.mp4) / [`SnipPaste Demo Windows.mp4`](SnipPaste%20Demo%20Windows.mp4)
 
 ### How it works
 
