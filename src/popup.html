@@ -4,87 +4,266 @@
   <meta charset="utf-8">
   <title>SnipPaste</title>
   <style>
+    * { box-sizing: border-box; }
     :root { color-scheme: light dark; }
+
     body {
-      width: 300px; margin: 0; padding: 16px 16px 14px;
-      font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-      background: #fbfbfd; color: #18181b;
+      width: 352px; margin: 0; padding: 0;
+      font: 13px/1.5 "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #FCFCF9; color: #131316;
+      -webkit-font-smoothing: antialiased;
     }
-    h1 { margin: 0 0 2px; font-size: 14px; letter-spacing: -.01em; }
-    .sub { margin: 0 0 14px; font-size: 11.5px; color: #71717a; }
-    .row {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      padding: 10px 0; border-top: 1px solid #ececf1;
+
+    /* header */
+    .header {
+      padding: 18px 18px 16px;
+      background: linear-gradient(135deg, #6C5CFF 0%, #5B4CF2 55%, #4F46E5 100%);
+      color: white;
+      position: relative; overflow: hidden;
     }
-    .row label { font-size: 12.5px; }
-    .row .note { display: block; font-size: 11px; color: #71717a; margin-top: 1px; }
-    input[type=checkbox] { width: 15px; height: 15px; accent-color: #6c5cff; }
+    .header::before {
+      content:''; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(300px 160px at 18% 0%, rgba(255,255,255,.22), transparent 62%),
+        radial-gradient(220px 140px at 92% 100%, rgba(255,255,255,.14), transparent 60%);
+    }
+    .header::after {
+      content:''; position: absolute; inset: 0; pointer-events: none; opacity: .08;
+      background-image:
+        linear-gradient(rgba(255,255,255,.7) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.7) 1px, transparent 1px);
+      background-size: 20px 20px;
+      mask: radial-gradient(400px 200px at 30% 0%, black 30%, transparent 75%);
+    }
+    .header-top { display: flex; align-items: center; justify-content: space-between; position: relative; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-mark {
+      width: 30px; height: 30px; border-radius: 9px;
+      background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.22);
+      display: grid; place-items: center; backdrop-filter: blur(8px);
+    }
+    .brand h1 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -.02em; line-height: 1; }
+    .brand p { margin: 1px 0 0; font-size: 11.5px; opacity: .82; font-weight: 400; letter-spacing: -.01em; }
+    .header-badge {
+      font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+      background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.18);
+      padding: 4px 8px; border-radius: 999px; backdrop-filter: blur(8px);
+    }
 
-    .status { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 500; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: #a1a1aa; flex: none; }
-    .dot.ok { background: #22c55e; }
-    .dot.bad { background: #f59e0b; }
+    .body { padding: 14px 14px 12px; }
 
-    .install { margin: 10px 0 0; padding: 10px 11px; border-radius: 8px;
-               background: #f4f4f7; border: 1px solid #e4e4e9; display: none; }
+    /* status card */
+    .status-card {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 13px; border-radius: 12px;
+      background: #fff; border: 1px solid #E8E5DD;
+      box-shadow: 0 1px 2px rgba(16,16,20,.06), 0 4px 12px rgba(16,16,20,.05);
+      position: relative; overflow: hidden;
+    }
+    .status-card::before {
+      content:''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: #C8C5BE; transition: background .2s;
+    }
+    .status-card.ok::before { background: #10B981; }
+    .status-card.bad::before { background: #F59E0B; }
+    .status-icon {
+      width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none;
+      background: #F4F2EE; color: #6E6E78; border: 1px solid #E8E5DD;
+    }
+    .status-card.ok .status-icon { background: #ECFDF5; color: #059669; border-color: #A7F3D0; }
+    .status-card.bad .status-icon { background: #FFFBEB; color: #D97706; border-color: #FDE68A; }
+    .status-text { flex: 1; min-width: 0; }
+    .status-label { font-size: 12px; font-weight: 600; letter-spacing: -.01em; line-height: 1.2; color: #131316; }
+    .status-sub { font-size: 11.5px; color: #6E6E78; line-height: 1.3; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dot {
+      width: 9px; height: 9px; border-radius: 50%; background: #C8C5BE; flex: none;
+      box-shadow: 0 0 0 3px rgba(0,0,0,.04);
+    }
+    .dot.ok { background: #10B981; box-shadow: 0 0 0 4px rgba(16,185,129,.18); animation: pulseDot 2s ease-in-out infinite; }
+    .dot.bad { background: #F59E0B; box-shadow: 0 0 0 4px rgba(245,158,11,.18); }
+    @keyframes pulseDot { 0%,100%{ box-shadow: 0 0 0 4px rgba(16,185,129,.18)} 50%{ box-shadow: 0 0 0 7px rgba(16,185,129,.08)} }
+
+    /* install block */
+    .install {
+      margin-top: 12px; padding: 13px 13px 12px; border-radius: 12px;
+      background: linear-gradient(180deg, #1E1E24 0%, #131316 100%);
+      border: 1px solid #2A2A30;
+      display: none; position: relative; overflow: hidden;
+    }
     .install.show { display: block; }
-    .install p { margin: 0 0 7px; font-size: 11.5px; color: #52525b; }
+    .install::before {
+      content:''; position: absolute; inset: 0; pointer-events: none; opacity: .06;
+      background-image: linear-gradient(rgba(255,255,255,.9) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.9) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+    .install-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; position: relative; }
+    .install-head svg { color: #FBBF24; flex: none; }
+    .install-head span { font-size: 12px; font-weight: 600; color: #F4F4F5; letter-spacing: -.01em; }
+    .install p { margin: 0 0 9px; font-size: 11.5px; color: #A1A1AA; line-height: 1.5; position: relative; }
     .install code {
-      display: block; padding: 7px 8px; border-radius: 5px; background: #18181b; color: #e4e4e7;
-      font: 10.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
-      white-space: pre-wrap; word-break: break-all; user-select: all;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 9px 10px; border-radius: 8px;
+      background: #0D0D11; border: 1px solid #2A2A30; color: #E4E4E7;
+      font: 11px/1.4 "JetBrains Mono", ui-monospace, monospace;
+      white-space: pre-wrap; word-break: break-all; user-select: all; position: relative;
     }
-    .copy { margin-top: 7px; font: inherit; font-size: 11.5px; padding: 4px 9px; border-radius: 6px;
-            border: 1px solid #d4d4d8; background: #fff; color: inherit; cursor: pointer; }
-    .copy:hover { border-color: #6c5cff; color: #6c5cff; }
+    .copy {
+      margin-top: 9px; width: 100%;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      font: 600 12.5px inherit; padding: 8px 12px; border-radius: 8px;
+      border: 1px solid #3A3A42; background: #26262C; color: #E4E4E7; cursor: pointer;
+      transition: all .15s; position: relative;
+    }
+    .copy:hover { background: #2E2E36; border-color: #6C5CFF; color: #fff; }
+    .copy:active { transform: scale(.98); }
+    .copy.copied { background: #10B981; border-color: #10B981; color: white; }
 
-    .keys { margin-top: 12px; padding-top: 10px; border-top: 1px solid #ececf1; font-size: 11.5px; color: #71717a; }
-    .keys kbd {
-      font: 11px ui-monospace, SFMono-Regular, Menlo, monospace;
-      background: #f1f1f5; border: 1px solid #dedee5; border-bottom-width: 2px;
-      border-radius: 4px; padding: 1px 4px; color: #3f3f46;
+    /* toggle row */
+    .row {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      padding: 14px 2px 2px; margin-top: 12px; border-top: 1px solid #E8E5DD;
     }
-    .keys p { margin: 0 0 5px; }
-    a { color: #6c5cff; }
+    .row label { font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: #1A1A1E; cursor: pointer; }
+    .row .note { display: block; font-size: 11.5px; color: #6E6E78; font-weight: 400; margin-top: 2px; }
+
+    /* switch */
+    .switch {
+      position: relative; width: 44px; height: 26px; flex: none;
+      background: #E4E1DA; border-radius: 999px; cursor: pointer;
+      transition: background .2s; border: 1px solid #D6D2C9;
+    }
+    .switch.on { background: linear-gradient(135deg, #6C5CFF, #4F46E5); border-color: transparent; box-shadow: 0 2px 8px rgba(108,92,255,.3); }
+    .switch::after {
+      content:''; position: absolute; top: 2px; left: 2px;
+      width: 20px; height: 20px; border-radius: 50%; background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,.18), 0 1px 1px rgba(0,0,0,.08);
+      transition: transform .22s cubic-bezier(.2,.8,.2,1);
+    }
+    .switch.on::after { transform: translateX(18px); }
+    .switch input { appearance: none; position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+
+    /* shortcuts */
+    .keys {
+      margin-top: 12px; padding: 12px 13px; border-radius: 12px;
+      background: #fff; border: 1px solid #E8E5DD;
+      box-shadow: 0 1px 2px rgba(16,16,20,.04);
+    }
+    .keys-title { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #6E6E78; margin: 0 0 8px; }
+    .keys-grid { display: flex; flex-direction: column; gap: 7px; }
+    .key-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; color: #2E2E32; }
+    .key-row span:first-child { display: flex; align-items: center; gap: 7px; }
+    .key-row svg { color: #6E6E78; flex: none; }
+    kbd {
+      font: 600 11px "JetBrains Mono", ui-monospace, monospace;
+      background: #F4F2EE; border: 1px solid #E8E5DD; border-bottom-width: 2px;
+      border-radius: 6px; padding: 2px 6px; color: #3F3F46; white-space: nowrap;
+      box-shadow: 0 1px 0 rgba(0,0,0,.04);
+    }
+    .keys a { color: #6C5CFF; font-weight: 600; text-decoration: none; font-size: 12.5px; }
+    .keys a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+    .foot { margin-top: 12px; text-align: center; font-size: 11px; color: #A0A0AB; }
+    .foot a { color: #6E6E78; text-decoration: none; }
+    .foot a:hover { color: #6C5CFF; }
+
     @media (prefers-color-scheme: dark) {
-      body { background: #161619; color: #ededf0; }
-      .sub, .row .note, .keys, .install p { color: #a1a1aa; }
-      .row, .keys { border-color: #2a2a30; }
-      .install { background: #1c1c21; border-color: #2f2f37; }
-      .install code { background: #0d0d11; }
-      .copy { background: #1f1f24; border-color: #3a3a42; }
-      .keys kbd { background: #26262c; border-color: #3a3a42; color: #d4d4d8; }
+      body { background: #121214; color: #EDEDF0; }
+      .body { background: #121214; }
+      .status-card { background: #1C1C20; border-color: #2A2A30; }
+      .status-card .status-label { color: #F4F4F5; }
+      .status-icon { background: #26262C; border-color: #2A2A30; color: #9A9AA6; }
+      .row { border-color: #2A2A30; }
+      .row label { color: #F4F4F5; }
+      .row .note, .status-sub { color: #9A9AA6; }
+      .switch { background: #2A2A30; border-color: #3A3A42; }
+      .keys { background: #1C1C20; border-color: #2A2A30; }
+      .keys-title { color: #9A9AA6; }
+      .key-row { color: #D4D4DA; }
+      kbd { background: #26262C; border-color: #3A3A42; color: #D4D4DA; }
+      .foot a { color: #9A9AA6; }
     }
   </style>
 </head>
 <body>
-  <h1>SnipPaste</h1>
-  <p class="sub">Snip anything on screen — it lands in your text box.</p>
-
-  <div class="row">
-    <div class="status">
-      <span class="dot" id="dot"></span>
-      <span id="statusText">Checking helper…</span>
+  <div class="header">
+    <div class="header-top">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <g stroke="white" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5.6 9V7.1A1.5 1.5 0 0 1 7.1 5.6H9"/><path d="M15 5.6h1.9A1.5 1.5 0 0 1 18.4 7.1V9"/><path d="M18.4 15v1.9a1.5 1.5 0 0 1-1.5 1.5H15"/><path d="M9 18.4H7.1a1.5 1.5 0 0 1-1.5-1.5V15"/>
+            </g>
+            <rect x="8.2" y="8.2" width="7.6" height="7.6" rx="1.9" fill="white"/>
+          </svg>
+        </span>
+        <div>
+          <h1>SnipPaste</h1>
+          <p>Snip anything → auto paste</p>
+        </div>
+      </div>
+      <span class="header-badge">v1.3.0</span>
     </div>
   </div>
 
-  <div class="install" id="install">
-    <p id="installWhy">The desktop helper opens the Windows snipping overlay. Without it, the
-      button snips only the current page. In the folder you unzipped SnipPaste into:</p>
-    <code id="cmd">powershell -ExecutionPolicy Bypass -File "install.ps1"</code>
-    <button class="copy" id="copy" type="button">Copy</button>
-  </div>
+  <div class="body">
+    <div class="status-card" id="statusCard">
+      <span class="status-icon" id="statusIcon" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </span>
+      <div class="status-text">
+        <div class="status-label" id="statusText">Checking helper…</div>
+        <div class="status-sub" id="statusSub">Talking to the desktop helper</div>
+      </div>
+      <span class="dot" id="dot" aria-hidden="true"></span>
+    </div>
 
-  <div class="row">
-    <label for="showButton">Show button on text boxes
-      <span class="note">Turn off to use the shortcut only</span>
-    </label>
-    <input type="checkbox" id="showButton">
-  </div>
+    <div class="install" id="install">
+      <div class="install-head">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        <span>Desktop helper not found</span>
+      </div>
+      <p id="installWhy">The helper opens the Windows snipping overlay. Without it the button can only snip the current page.</p>
+      <code id="cmd">Right-click native\install.ps1 → Run with PowerShell</code>
+      <button class="copy" id="copy" type="button">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v3"/></svg>
+        <span>Copy command</span>
+      </button>
+    </div>
 
-  <div class="keys">
-    <p><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> snip anything on screen</p>
-    <p><kbd>Esc</kbd> cancels a snip · <a href="#" id="shortcuts">change shortcut</a></p>
+    <div class="row">
+      <label for="showButton">Show button on text boxes
+        <span class="note">Turn off to use the keyboard shortcut only</span>
+      </label>
+      <label class="switch" id="switchWrap">
+        <input type="checkbox" id="showButton" />
+      </label>
+    </div>
+
+    <div class="keys">
+      <p class="keys-title">Shortcuts</p>
+      <div class="keys-grid">
+        <div class="key-row">
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h4M8 6v4M14 12h6M16 10v4"/></svg>
+            Snip anywhere
+          </span>
+          <span><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd></span>
+        </div>
+        <div class="key-row">
+          <span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            Cancel snip
+          </span>
+          <span><kbd>Esc</kbd></span>
+        </div>
+        <div class="key-row" style="margin-top:2px; padding-top:8px; border-top:1px solid #F0EDE6">
+          <span style="color:#6E6E78; font-size:12px">Customise shortcut</span>
+          <a href="#" id="shortcuts">Change →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">Nothing leaves your machine · No network calls</div>
   </div>
 
   <script src="popup.js"></script>

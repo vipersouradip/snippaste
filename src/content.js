@@ -166,42 +166,54 @@
   const BUTTON_CSS = `
     :host { all: initial; }
     .btn {
-      position: fixed; width: 24px; height: 24px; border-radius: 7px;
+      position: fixed; width: 24px; height: 24px; border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(24,24,27,.72); color: #fff; cursor: pointer;
-      border: 1px solid rgba(255,255,255,.18);
-      box-shadow: 0 2px 8px rgba(0,0,0,.28);
-      opacity: .5; transition: opacity .12s, transform .12s, background .12s;
+      background: linear-gradient(135deg, #1A1A1E 0%, #2A2A30 100%);
+      color: #fff; cursor: pointer;
+      border: 1px solid rgba(255,255,255,.15);
+      box-shadow: 0 2px 10px rgba(0,0,0,.28), 0 1px 2px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.10);
+      opacity: .72; transition: opacity .16s, transform .16s, background .16s, box-shadow .16s, border-color .16s;
       pointer-events: auto; user-select: none;
-      -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     }
-    .btn:hover { opacity: 1; transform: scale(1.08); background: rgba(108,92,255,.95); border-color: rgba(255,255,255,.3); }
+    .btn:hover { opacity: 1; transform: scale(1.08) translateY(-1px); background: linear-gradient(135deg, #6C5CFF 0%, #4F46E5 100%); border-color: rgba(255,255,255,.24); box-shadow: 0 6px 20px rgba(108,92,255,.42), 0 2px 8px rgba(0,0,0,.2); }
     .btn:active { transform: scale(.94); }
     .btn.hidden { display: none; }
     /* Laid out at all times so it can be measured before it is shown; hidden
        with visibility, which also keeps it out of elementFromPoint. */
     .menu {
-      position: fixed; top: 0; left: 0; min-width: 168px; padding: 5px;
-      border-radius: 10px; background: rgba(18,18,24,.97); color: #f4f4f5;
-      border: 1px solid rgba(255,255,255,.13);
-      box-shadow: 0 10px 34px rgba(0,0,0,.5);
-      font: 500 12.5px/1.4 ui-sans-serif, system-ui, -apple-system, sans-serif;
-      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      position: fixed; top: 0; left: 0; min-width: 192px; padding: 6px;
+      border-radius: 14px; background: rgba(18,18,22,.94); color: #f4f4f5;
+      border: 1px solid rgba(255,255,255,.11);
+      box-shadow: 0 16px 40px rgba(0,0,0,.45), 0 4px 12px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.06);
+      font: 500 12.5px/1.4 "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+      -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%);
       visibility: hidden; opacity: 0; pointer-events: none;
-      transition: opacity .12s;
+      transition: opacity .14s, transform .14s; transform: translateY(4px) scale(.98);
+      overflow: hidden;
     }
-    .menu.show { visibility: visible; opacity: 1; pointer-events: auto; }
+    .menu.show { visibility: visible; opacity: 1; pointer-events: auto; transform: none; }
+    .menu-head {
+      padding: 6px 10px 8px; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: #9a9aa6; display: flex; align-items: center; gap: 6px;
+    }
+    .menu-head::before { content:''; width: 6px; height: 6px; border-radius: 50%; background: #6C5CFF; box-shadow: 0 0 0 3px rgba(108,92,255,.18); }
     .item {
-      display: block; padding: 7px 10px; border-radius: 7px;
-      cursor: pointer; white-space: nowrap; color: #e9e9ef;
+      display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 9px;
+      cursor: pointer; white-space: nowrap; color: #e9e9ef; transition: background .12s, color .12s, transform .08s;
     }
-    .item:hover { background: rgba(108,92,255,.92); color: #fff; }
-    .sep { height: 1px; margin: 4px 6px; background: rgba(255,255,255,.1); }
+    .item svg { flex: none; width: 16px; height: 16px; opacity: .9; }
+    .item:hover { background: linear-gradient(135deg, #6C5CFF 0%, #5B4CF2 100%); color: #fff; transform: translateX(1px); }
+    .item:active { transform: scale(.98); }
+    .item.just { color: #a1a1aa; }
+    .item.just:hover { color: #fff; }
+    .sep { height: 1px; margin: 6px 6px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent); }
     .foot {
-      padding: 4px 10px 3px; color: #9a9aa6;
-      font: 500 10.5px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      padding: 8px 10px 4px; color: #8e8e9a;
+      font: 500 11px/1.4 "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
     }
-    .foot b { color: #b9b4ff; font-weight: 600; }
+    .foot b { color: #b9b4ff; font-weight: 700; background: rgba(108,92,255,.18); border: 1px solid rgba(108,92,255,.22); padding: 1px 5px; border-radius: 5px; font-size: 10.5px; }
   `;
 
   /* Picking one of these snips as usual, then types the prompt in with the image,
@@ -235,10 +247,53 @@
     btn.appendChild(snipIcon());
 
     menu = el('div', 'menu');
+    const head = el('div', 'menu-head');
+    head.textContent = 'Snip with prompt';
+    menu.appendChild(head);
+    function svgEl(tag, attrs) {
+      const n = document.createElementNS(SVG_NS, tag);
+      for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+      return n;
+    }
+    function actionIcon(label) {
+      const wrap = document.createElementNS(SVG_NS, 'svg');
+      for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', width: '16', height: '16', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.8', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) wrap.setAttribute(k, v);
+      const add = (tag, d) => wrap.appendChild(svgEl(tag, d));
+      if (label.includes('Explain')) {
+        add('circle', { cx: '12', cy: '12', r: '10' });
+        add('path', { d: 'M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3' });
+        add('path', { d: 'M12 17h.01' });
+      } else if (label.includes('Answer')) {
+        add('path', { d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' });
+      } else if (label.includes('Summarise')) {
+        add('path', { d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' });
+        add('path', { d: 'M14 2v6h6' });
+        add('path', { d: 'M10 13H8' });
+        add('path', { d: 'M16 17H8' });
+      } else if (label.includes('Translate')) {
+        add('path', { d: 'M5 8h6' });
+        add('path', { d: 'M4 6h8' });
+        add('path', { d: 'M12 2a15.3 15.3 0 0 1 4 10a15.3 15.3 0 0 1-4 10a15.3 15.3 0 0 1-4-10a15.3 15.3 0 0 1 4-10z' });
+      } else if (label.includes('Extract')) {
+        add('path', { d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' });
+        add('path', { d: 'M14 2v6h6' });
+        add('path', { d: 'M10 13H8' });
+      } else if (label.includes('Just')) {
+        add('rect', { x: '3', y: '3', width: '18', height: '18', rx: '2' });
+        add('path', { d: 'M9 9h6v6H9z' });
+      } else {
+        add('circle', { cx: '12', cy: '12', r: '10' });
+      }
+      return wrap;
+    }
     for (const action of ACTIONS) {
       if (!action) { menu.appendChild(el('div', 'sep')); continue; }
       const item = el('div', 'item');
-      item.textContent = action.label;
+      if (action.label === 'Just snip') item.classList.add('just');
+      item.appendChild(actionIcon(action.label));
+      const span = el('span');
+      span.textContent = action.label;
+      item.appendChild(span);
       item.setAttribute('role', 'button');
       // mousedown would blur the text box before we get to remember it.
       item.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
@@ -252,7 +307,9 @@
     const foot = el('div', 'foot');
     const key = el('b');
     key.textContent = 'Alt+Shift+S';
-    foot.append('Snip without a prompt: ', key);
+    const footLabel = el('span');
+    footLabel.textContent = 'Just snip';
+    foot.append(footLabel, key);
     menu.appendChild(foot);
 
     btn.addEventListener('mousedown', (e) => { e.preventDefault(); e.stopPropagation(); });
@@ -504,30 +561,33 @@
   const OVERLAY_CSS = `
     :host { all: initial; }
     .root { position: fixed; inset: 0; cursor: crosshair; overflow: hidden;
-            font: 500 12px/1.4 ui-sans-serif, system-ui, -apple-system, sans-serif; }
+            font: 500 12px/1.4 "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif; }
     .shot { position: fixed; inset: 0; }
-    .scrim { position: fixed; inset: 0; background: rgba(9,9,14,.5); }
+    .scrim { position: fixed; inset: 0; background: rgba(8,8,14,.52); backdrop-filter: blur(1px); }
     .sel { position: fixed; display: none; background: transparent;
-           box-shadow: 0 0 0 100vmax rgba(9,9,14,.5); outline: 1.5px solid #7c6cff; }
-    .sel::after { content: ''; position: absolute; inset: 0; outline: 1px solid rgba(255,255,255,.7); }
-    .xh { position: fixed; background: rgba(124,108,255,.5); pointer-events: none; }
-    .xh.v { top: 0; bottom: 0; width: 1px; }
-    .xh.h { left: 0; right: 0; height: 1px; }
-    .badge { position: fixed; display: none; padding: 3px 7px; border-radius: 5px;
-             background: #7c6cff; color: #fff; font-variant-numeric: tabular-nums;
-             white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
-    .loupe { position: fixed; width: 116px; height: 116px; border-radius: 10px; display: none;
-             border: 1px solid rgba(255,255,255,.35); box-shadow: 0 6px 20px rgba(0,0,0,.5);
-             pointer-events: none; background: #0b0b10; }
-    .hint { position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
-            padding: 8px 15px; border-radius: 999px; background: rgba(18,18,24,.9); color: #f4f4f5;
-            border: 1px solid rgba(255,255,255,.14); box-shadow: 0 6px 22px rgba(0,0,0,.4);
-            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); white-space: nowrap; }
-    .hint b { color: #b9b4ff; }
-    .hint.fade { opacity: 0; transition: opacity .15s; }
+           box-shadow: 0 0 0 100vmax rgba(8,8,14,.52); outline: 1.5px solid #6C5CFF; border-radius: 2px; }
+    .sel::after { content: ''; position: absolute; inset: 0; outline: 1px solid rgba(255,255,255,.75); border-radius: 1px; }
+    .xh { position: fixed; background: linear-gradient(180deg, rgba(108,92,255,0), rgba(108,92,255,.55), rgba(108,92,255,0)); pointer-events: none; }
+    .xh.v { top: 0; bottom: 0; width: 1px; background: linear-gradient(180deg, transparent, rgba(108,92,255,.5), transparent); }
+    .xh.h { left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(108,92,255,.5), transparent); }
+    .badge { position: fixed; display: none; padding: 4px 8px; border-radius: 8px;
+             background: linear-gradient(135deg, #6C5CFF, #4F46E5); color: #fff; font: 600 11px "JetBrains Mono", monospace;
+             font-variant-numeric: tabular-nums; letter-spacing: .02em;
+             white-space: nowrap; box-shadow: 0 4px 14px rgba(108,92,255,.38), 0 2px 6px rgba(0,0,0,.22);
+             border: 1px solid rgba(255,255,255,.14); }
+    .loupe { position: fixed; width: 120px; height: 120px; border-radius: 14px; display: none;
+             border: 1px solid rgba(255,255,255,.28); box-shadow: 0 12px 32px rgba(0,0,0,.48), 0 4px 12px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.10);
+             pointer-events: none; background: #0b0b10; overflow: hidden; }
+    .hint { position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            padding: 9px 16px; border-radius: 999px; background: rgba(18,18,22,.92); color: #f4f4f5;
+            border: 1px solid rgba(255,255,255,.12); box-shadow: 0 8px 28px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.06);
+            -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%); white-space: nowrap;
+            font-size: 12.5px; display: flex; align-items: center; gap: 8px; }
+    .hint b { color: #b9b4ff; background: rgba(108,92,255,.18); border: 1px solid rgba(108,92,255,.22); padding: 1px 6px; border-radius: 6px; font-size: 11px; }
+    .hint.fade { opacity: 0; transform: translateX(-50%) translateY(-4px); transition: opacity .18s, transform .18s; }
   `;
 
-  const LOUPE_SIZE = 116;
+  const LOUPE_SIZE = 120;
   const LOUPE_ZOOM = 6;
 
   async function capturePageFrame() {
@@ -859,12 +919,17 @@
 
   const TOAST_CSS = `
     :host { all: initial; }
-    .t { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 8px);
-         padding: 9px 15px; border-radius: 999px; background: rgba(18,18,24,.94); color: #f4f4f5;
-         font: 500 12.5px/1.4 ui-sans-serif, system-ui, -apple-system, sans-serif;
-         border: 1px solid rgba(255,255,255,.14); box-shadow: 0 8px 26px rgba(0,0,0,.42);
-         opacity: 0; transition: opacity .16s, transform .16s; white-space: nowrap; max-width: 90vw; }
-    .t.show { opacity: 1; transform: translate(-50%, 0); }
+    .t { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 10px) scale(.98);
+         padding: 10px 16px; border-radius: 999px; background: rgba(18,18,22,.94); color: #f4f4f5;
+         font: 500 13px/1.4 "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+         border: 1px solid rgba(255,255,255,.12); box-shadow: 0 12px 32px rgba(0,0,0,.38), 0 4px 12px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.06);
+         opacity: 0; transition: opacity .22s cubic-bezier(.2,.8,.2,1), transform .22s cubic-bezier(.2,.8,.2,1);
+         white-space: nowrap; max-width: 90vw; display: flex; align-items: center; gap: 9px;
+         -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%); }
+    .t::before { content:''; width: 22px; height: 22px; border-radius: 50%; flex: none;
+                 background: linear-gradient(135deg, #6C5CFF, #4F46E5); display: block;
+                 box-shadow: 0 2px 8px rgba(108,92,255,.4); }
+    .t.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
   `;
 
   let toastHost = null, toastBody = null, toastTimer = 0;
