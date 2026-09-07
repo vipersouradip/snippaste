@@ -6,9 +6,13 @@
   Chrome extension for Windows · works inside websites, not apps
 </p>
 
+> **Right now only for Windows** — works in **Claude, Gemini, ChatGPT, Grok, Perplexity** websites (`chatgpt.com`, `claude.ai`, `gemini.google.com`…). **iOS and Android coming soon.**
+
 ### Demo
 
 <video src="SnipPaste Demo Windows.mp4" controls width="100%" style="border-radius:16px; border:1px solid #E8E5DD"></video>
+
+> Windows 11 · live recording · no cuts — drag any region → auto-pasted
 
 ### How it works
 
