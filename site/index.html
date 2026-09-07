@@ -245,6 +245,26 @@
   .demo-win-controls i:last-child:hover { background: #E81123; color: white; }
   .demo-bar-label { font: 500 12px var(--mono); color: var(--faint); letter-spacing: .02em; }
   .demo svg.main-demo { width: 100%; height: auto; display: block; }
+  /* demo video — real Windows recording */
+  .demo-video {
+    margin: 22px auto 0; max-width: 980px; position: relative;
+    border-radius: 24px; overflow: hidden;
+    background: #0F0F0F; border: 1px solid #E8E5DD;
+    box-shadow: 0 20px 60px rgba(0,0,0,.12), 0 4px 16px rgba(0,0,0,.08);
+  }
+  .demo-video-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 14px 10px 16px; background: linear-gradient(180deg, #F8F8F8 0%, #F0F0F0 100%);
+    border-bottom: 1px solid #EDEBE6; font: 500 12px var(--mono); color: var(--faint);
+  }
+  .demo-video-head b { color: var(--black); font-weight: 600; font-family: var(--font); letter-spacing: -.01em; }
+  .demo-video-head span:last-child { display: inline-flex; align-items: center; gap: 6px; font: 600 11px var(--font); color: white; background: #10B981; padding: 4px 8px; border-radius: 999px; }
+  .demo-video video { display: block; width: 100%; height: auto; background: #000; }
+  .demo-video .video-caption {
+    padding: 10px 16px; background: white; border-top: 1px solid #F0EDE6;
+    font-size: 13px; color: var(--muted); line-height: 1.5; text-align: center;
+  }
+  .demo-video .video-caption b { color: var(--black); }
   .ants { stroke-dasharray: 7 4; animation: march 1s linear infinite; }
   @keyframes march { to { stroke-dashoffset: -22; } }
   .pulse { animation: pulse 2.8s ease-in-out infinite; }
@@ -575,6 +595,19 @@
           </g>
         </svg>
       </div>
+    </div>
+
+    <div class="demo-video reveal">
+      <div class="demo-video-head">
+        <span><b>Demo — Windows</b> <span style="color:var(--muted);font-weight:400">snip any app → auto paste</span></span>
+        <span>▶ Real recording</span>
+      </div>
+      <video controls playsinline preload="metadata" poster="">
+        <source src="SnipPaste Demo Windows.mp4" type="video/mp4">
+        <source src="demo.mp4" type="video/mp4">
+        Your browser does not support the video tag. <a href="SnipPaste Demo Windows.mp4">Download the demo</a>.
+      </video>
+      <div class="video-caption">Recorded on Windows 11 — Chrome extension + desktop helper. <b>No edits, no cuts.</b> Drag → release → pasted.</div>
     </div>
   </div>
   </main>

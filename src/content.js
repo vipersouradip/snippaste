@@ -444,9 +444,12 @@
     lastRectKey = key;
 
     const box = composerBox(target);
+    // ChatGPT's composer sits low inside its rounded frame (14px top padding) —
+    // top+8 lands ~6px above the text and reads a little low; nudge up to 5px.
+    const TOP_PAD = 5;
     const top = box.height < BTN_SIZE + BTN_PAD * 2
       ? box.top + (box.height - BTN_SIZE) / 2
-      : box.top + BTN_PAD;
+      : box.top + TOP_PAD;
 
     // Hidden while probing, so elementFromPoint reports the page and not us.
     // No paint happens in between, so nothing flickers.

@@ -16,7 +16,8 @@ const TYPES = {
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
   '.zip': 'application/zip',
-  '.apk': 'application/vnd.android.package-archive'
+  '.apk': 'application/vnd.android.package-archive',
+  '.mp4': 'video/mp4'
 };
 
 http.createServer((req, res) => {
