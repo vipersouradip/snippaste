@@ -717,7 +717,7 @@
           <div><h3>Windows</h3><p class="sub">Chrome extension + desktop helper</p></div>
         </div>
         <a class="btn btn-primary block" id="dl-windows" href="downloads/SnipPaste-windows.zip" download>Download for Windows <i>↗</i></a>
-        <div class="meta"><span><i class="live-dot"></i> <span id="win-version">v1.3.0</span></span><span class="meta-dot"></span><span id="win-size"></span><span class="meta-dot"></span><span>Chrome / Brave / Edge</span></div>
+        <div class="meta"><span><i class="live-dot"></i> <span id="win-version">v1.3.0</span></span><span class="meta-dot"></span><span id="win-size"></span><span class="meta-dot"></span><span id="win-downloads-wrap" style="display:none"><span class="meta-dot"></span><span id="win-downloads"></span></span><span>Chrome / Brave / Edge</span></div>
         <ol class="steps"><li>Unzip, then load the folder at <code>chrome://extensions</code> (Brave: <code>brave://extensions</code>, Edge: <code>edge://extensions</code>) with Developer mode on</li><li>Right-click <code>native\install.ps1</code> → Run with PowerShell</li><li>Restart Chrome. Hover any text box and click the snip button</li></ol>
         <p class="more"><a href="#install">Full install steps →</a></p>
       </article>
@@ -911,6 +911,31 @@
       set('win-version', 'v' + data.windows.version);
       if (data.windows.file) set('win-size', data.windows.file.size);
     }
+    // Download count comes from GitHub Releases (public API, no key). Zip lives
+    // as a release asset attached by .github/workflows/release.yml on each tag.
+    (function () {
+      var dlBtn = document.getElementById('dl-windows');
+      var dlCount = document.getElementById('win-downloads');
+      var dlWrap = document.getElementById('win-downloads-wrap');
+      if (!dlBtn) return;
+      fetch('https://api.github.com/repos/vipersouradip/snippaste/releases/latest')
+        .then(function (r) { if (!r.ok) throw new Error('no release'); return r.json(); })
+        .then(function (release) {
+          var asset = (release.assets || []).filter(function (a) {
+            return /SnipPaste-windows\.zip/.test(a.name);
+          })[0];
+          if (!asset) throw new Error('no asset');
+          dlBtn.href = 'https://github.com/vipersouradip/snippaste/releases/latest/download/' + asset.name;
+          if (dlWrap && dlCount && asset.download_count > 0) {
+            dlCount.textContent = asset.download_count.toLocaleString('en-US') + ' downloads';
+            dlWrap.style.display = '';
+          }
+        })
+        .catch(function () {
+          // No release yet — fall back to the zip bundled with the site.
+          dlBtn.href = 'downloads/SnipPaste-windows.zip';
+        });
+    })();
     if (/Windows NT/i.test(navigator.userAgent)) {
       document.getElementById('card-windows').classList.add('recommended');
     }

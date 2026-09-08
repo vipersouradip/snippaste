@@ -8,6 +8,25 @@
 
 > **Right now only for Windows** — works in **Claude, Gemini, ChatGPT, Grok, Perplexity** websites (`chatgpt.com`, `claude.ai`, `gemini.google.com`…). **iOS and Android coming soon.**
 
+<p align="center">
+  <a href="https://github.com/vipersouradip/snippaste/releases/latest">
+    <img src="https://img.shields.io/github/downloads/vipersouradip/snippaste/total?label=downloads&logo=github" alt="Total downloads">
+  </a>
+</p>
+
+### Download
+
+[⬇️ Download SnipPaste for Windows](https://github.com/vipersouradip/snippaste/releases/latest/download/SnipPaste-windows.zip)
+
+The zip is attached to each Git tag as a GitHub Release, so every download is
+counted there (badge above shows the total). Cut a new build with:
+
+```
+git tag v1.3.1 && git push --tags
+```
+
+The release workflow packages the extension automatically — no keys, no setup.
+
 ### Demo
 
 ![SnipPaste demo — drag a region, it lands in the composer](demo.gif)
