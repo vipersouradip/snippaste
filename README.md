@@ -10,14 +10,15 @@
 
 ### Demo
 
-[![SnipPaste demo — drag a region, it lands in the composer](demo-poster.jpg)](https://github.com/vipersouradip/snippaste/blob/main/demo.mp4)
+![SnipPaste demo — drag a region, it lands in the composer](demo.gif)
 
-<!-- To turn the thumbnail above into an inline player:
-     1. Open this file on github.com · pencil (Edit) · drag demo-compressed.mp4 into the editor box.
-     2. GitHub uploads it and inserts a https://github.com/user-attachments/assets/<uuid> link.
-     3. Delete the thumbnail line above and leave that bare URL alone on its own line —
-        no <video> tag, no ![](), no <a href>. A bare attachment URL is what GitHub turns into a player.
-     Only user-attachments / user-images.githubusercontent.com URLs embed this way;
+<!-- This is a GIF, so it animates anywhere the README is rendered (github.com, npm, offline clones)
+     and needs nothing but the relative path above.
+     For an inline player with audio/scrubbing instead: open this file on github.com · pencil (Edit) ·
+     drag demo-compressed.mp4 into the editor box. GitHub uploads it and inserts a
+     https://github.com/user-attachments/assets/<uuid> link — replace the image line above with that
+     bare URL, alone on its own line. No <video> tag, no ![](), no <a href>.
+     Only user-attachments / user-images.githubusercontent.com URLs embed that way;
      raw.githubusercontent.com and release-download links do not. -->
 
 > Windows 11 · live recording · no cuts — drag any region → auto-pasted
