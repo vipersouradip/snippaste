@@ -94,6 +94,15 @@
   }
   nav a.nav-donate:hover { background: #FFD400; border-color: #D9B800; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,221,0,.45); }
   nav a.nav-donate svg { flex: none; }
+  .menu-btn {
+    display: none; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 10px; border: 1px solid #E8E5DD;
+    background: white; color: var(--black); cursor: pointer; padding: 0; flex: none;
+  }
+  .menu-btn svg { display: block; }
+  .menu-btn[aria-expanded="true"] .icon-menu { display: none; }
+  .menu-btn[aria-expanded="true"] .icon-close { display: block; }
+  .icon-close { display: none; }
 
   /* hero cloud background */
   .hero-cloud {
@@ -478,6 +487,32 @@
     .hero { padding-top: 24px; }
     section { padding-top: 64px; }
   }
+  @media (max-width: 760px) {
+    .menu-btn { display: inline-flex; }
+    .bar { height: 60px; gap: 12px; position: relative; }
+    nav {
+      position: absolute; top: 100%; left: 0; right: 0;
+      flex-direction: column; align-items: stretch; gap: 6px;
+      padding: 12px 16px 16px; background: white;
+      border-bottom: 1px solid #EDEBE6; box-shadow: 0 16px 30px rgba(0,0,0,.08);
+      display: none;
+    }
+    nav.open { display: flex; }
+    nav a { border-radius: 12px; }
+    nav a.nav-cta { justify-content: center; }
+    nav a.nav-donate { justify-content: center; }
+    .demo-bar-label { display: none; }
+  }
+  @media (max-width: 480px) {
+    .hero-toggle span { padding: 6px 11px; font-size: 12px; }
+    .rotate-line { font-size: 13px; gap: 8px; }
+    .rotate-word { font-size: 13.5px; }
+    .cta-note { gap: 8px 14px; }
+    .btn { padding: 12px 14px 12px 17px; font-size: 14.5px; }
+    .demo-video-head { font-size: 10.5px; padding: 10px; }
+    .demo-video-head span:last-child { font-size: 10px; padding: 3px 7px; }
+    .card { padding: 24px 18px 20px; }
+  }
   @media (prefers-reduced-motion: reduce) { .reveal, .stagger > *, .rotate-word, .float, .pulse, .ants { transition: none !important; animation: none !important; transform: none !important; opacity: 1 !important; filter: none !important; } }
 </style>
 </head>
@@ -496,7 +531,7 @@
       </span>
       SnipPaste
     </a>
-    <nav>
+    <nav id="siteNav">
       <a href="#how" class="hide-sm">Product</a>
       <a href="#features" class="hide-sm">Features</a>
       <a href="#faq" class="hide-sm">FAQ</a>
@@ -510,6 +545,10 @@
       </a>
       <a href="#download" class="nav-cta">Download for Windows <i>↗</i></a>
     </nav>
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="siteNav">
+      <svg class="icon-menu" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <svg class="icon-close" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
   </div>
 </header>
 
@@ -933,6 +972,22 @@
         idx = (idx + 1) % words.length;
       }, holding);
     })();
+
+    // Mobile menu toggle
+    var menuBtn = document.getElementById('menuBtn');
+    var siteNav = document.getElementById('siteNav');
+    if (menuBtn && siteNav) {
+      menuBtn.addEventListener('click', function () {
+        var open = siteNav.classList.toggle('open');
+        menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      siteNav.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () {
+          siteNav.classList.remove('open');
+          menuBtn.setAttribute('aria-expanded', 'false');
+        });
+      });
+    }
 
     // FAQ accordion
     document.querySelectorAll('.faq-q').forEach(function(btn){
