@@ -10,7 +10,8 @@
 
 ### Demo
 
-demo.mp4
+<!-- Replace this comment with the URL GitHub gives you after uploading demo.mp4 via the web editor -->
+https://github.com/user-attachments/assets/REPLACE_ME
 
 > Windows 11 · live recording · no cuts — drag any region → auto-pasted
 
