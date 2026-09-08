@@ -10,8 +10,15 @@
 
 ### Demo
 
-<!-- Replace this comment with the URL GitHub gives you after uploading demo.mp4 via the web editor -->
-https://github.com/user-attachments/assets/REPLACE_ME
+[![SnipPaste demo — drag a region, it lands in the composer](demo-poster.jpg)](https://github.com/vipersouradip/snippaste/blob/main/demo.mp4)
+
+<!-- To turn the thumbnail above into an inline player:
+     1. Open this file on github.com · pencil (Edit) · drag demo-compressed.mp4 into the editor box.
+     2. GitHub uploads it and inserts a https://github.com/user-attachments/assets/<uuid> link.
+     3. Delete the thumbnail line above and leave that bare URL alone on its own line —
+        no <video> tag, no ![](), no <a href>. A bare attachment URL is what GitHub turns into a player.
+     Only user-attachments / user-images.githubusercontent.com URLs embed this way;
+     raw.githubusercontent.com and release-download links do not. -->
 
 > Windows 11 · live recording · no cuts — drag any region → auto-pasted
 
